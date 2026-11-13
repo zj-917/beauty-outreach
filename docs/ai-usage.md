@@ -25,6 +25,7 @@
 | 任务 | 日期 | AI 产出 | 我审查时发现 / 纠正的问题 | 采纳程度（主观） | 耗时（估→实） |
 |---|---|---|---|---|---|
 | SDD v0.1→v1.0 | 2026-11-13 | 起草宪法 / 架构 / 数据模型 / 模块规格 / 测试计划 / 任务清单 | 人类评审后确认 Q-1~Q-8；AI 通读发现的 Q-9（AC-SYS-003 的 OpenAPI 路径清单）、Q-10（AC-LEAD-011 二次导入计数）、Q-11（start 的 Provider 前置检查）经人类确认并先改 spec；人类要求「执行任务时只读相关 SDD 文档、不默认通读全部 Markdown」，已写入 AGENTS.md §1 | 规格全部采纳；另按评审补充 3 条澄清与 1 条工作规则 | — |
+| T-00 | 2026-11-13 | 项目脚手架：`pyproject`、`core`（clock/config/db/errors/logging/security）、应用工厂（可注入 settings/clock/messenger）、统一错误、鉴权与请求 ID 中间件、`/healthz`、`conftest`（临时库 / 网络守卫 / FakeClock）与 8 个 AC 测试文件 | （待人工审查）AI 自查发现并修正：未预期异常由 Starlette 最外层 `ServerErrorMiddleware` 生成 500，绕过了请求 ID 中间件 → 错误处理器改为从 `request.state` 取 id 并自行回写 `X-Request-ID`。注意：AC-SYS-003 的「全部路径」与 AC-SYS-006 的「whatsapp_cloud → 501」需随 T-10/T-11 的端点补齐，当前 T-00 只覆盖网络守卫与 `/healthz`/docs | 待审查 | 1.0h→≈0.5h |
 | T-00 | | | | | |
 
 ## 4. AI 犯过的典型错误（持续追加）
