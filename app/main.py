@@ -15,6 +15,7 @@ from app.core.clock import Clock, SystemClock
 from app.core.config import Settings
 from app.core.db import build_engine, build_session_factory
 from app.core.logging import configure_logging
+from app.domain.masking import redact_log_text
 from app.models import create_schema
 
 
@@ -33,7 +34,7 @@ def create_app(
 ) -> FastAPI:
     """Build the FastAPI application with injectable collaborators."""
     settings = settings or Settings()
-    configure_logging(settings.log_level)
+    configure_logging(settings.log_level, redactor=redact_log_text)
     app = FastAPI(title="Beauty Outreach", version=APP_VERSION, lifespan=lifespan)
     engine = build_engine(settings)
     create_schema(engine)
