@@ -9,11 +9,12 @@ from fastapi import FastAPI
 
 from app import APP_VERSION
 from app.api.audit import router as audit_router
+from app.api.config import router as config_router
 from app.api.errors import register_exception_handlers
 from app.api.middleware import AdminAuthMiddleware, RequestContextMiddleware
 from app.api.system import router as system_router
 from app.core.clock import Clock, SystemClock
-from app.core.config import Settings
+from app.core.config import Settings, load_settings, validate_runtime_settings
 from app.core.db import build_engine, build_session_factory
 from app.core.logging import configure_logging
 from app.domain.masking import redact_log_text
@@ -34,7 +35,10 @@ def create_app(
     messenger: object | None = None,
 ) -> FastAPI:
     """Build the FastAPI application with injectable collaborators."""
-    settings = settings or Settings()
+    if settings is None:
+        settings = load_settings()
+    else:
+        validate_runtime_settings(settings)
     configure_logging(settings.log_level, redactor=redact_log_text)
     app = FastAPI(title="Beauty Outreach", version=APP_VERSION, lifespan=lifespan)
     engine = build_engine(settings)
@@ -51,6 +55,7 @@ def create_app(
     app.add_middleware(RequestContextMiddleware)
     app.include_router(system_router)
     app.include_router(audit_router)
+    app.include_router(config_router)
     return app
 
 
