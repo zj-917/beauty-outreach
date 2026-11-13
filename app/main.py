@@ -19,11 +19,16 @@ from app.core.db import build_engine, build_session_factory
 from app.core.logging import configure_logging
 from app.domain.masking import redact_log_text
 from app.models import create_schema
+from app.services.seed_service import database_is_empty, seed_defaults
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    """Release the database engine when the application stops."""
+    """Seed an empty database when configured, then release the engine on stop."""
+    if app.state.settings.seed_defaults:
+        with app.state.session_factory() as session:
+            if database_is_empty(session):
+                seed_defaults(session, app.state.clock)
     yield
     app.state.engine.dispose()
 

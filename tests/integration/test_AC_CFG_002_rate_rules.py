@@ -31,6 +31,8 @@ def test_AC_CFG_002_rate_rule_crud(client: TestClient) -> None:
         {"name": "bad", "scope": "GLOBAL", "window_seconds": 0, "max_count": 1},
         {"name": "bad", "scope": "GLOBAL", "window_seconds": 1, "max_count": 0},
         {"name": "bad", "scope": "WRONG", "window_seconds": 1, "max_count": 1},
+        {"name": "bad", "scope": "GLOBAL", "window_seconds": True, "max_count": 1},
+        {"name": "bad", "scope": "GLOBAL", "window_seconds": "10", "max_count": 1},
     ],
 )
 def test_AC_CFG_002_invalid_rate_rule_is_rejected(

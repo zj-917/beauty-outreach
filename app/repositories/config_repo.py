@@ -213,6 +213,14 @@ def get_setting(session: Session, key: str) -> Any | None:
     return None if row is None else row.value
 
 
+def is_empty(session: Session) -> bool:
+    """Return True when no settings or keywords have been stored yet."""
+    return all(
+        (session.scalar(select(func.count()).select_from(model)) or 0) == 0
+        for model in (SystemSetting, Keyword)
+    )
+
+
 def list_settings(session: Session) -> dict[str, Any]:
     """Return all stored runtime settings."""
     rows = session.scalars(select(SystemSetting)).all()

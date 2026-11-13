@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, RootModel
+from pydantic import BaseModel, ConfigDict, RootModel, StrictBool, StrictInt
 
 from app.schemas.common import UtcDatetime
 
@@ -16,8 +16,8 @@ class KeywordCreate(BaseModel):
 
     term: str
     kind: Literal["POSITIVE", "NEGATIVE"]
-    weight: int
-    enabled: bool = True
+    weight: StrictInt
+    enabled: StrictBool = True
 
 
 class KeywordUpdate(BaseModel):
@@ -25,8 +25,8 @@ class KeywordUpdate(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    weight: int | None = None
-    enabled: bool | None = None
+    weight: StrictInt | None = None
+    enabled: StrictBool | None = None
 
 
 class KeywordView(BaseModel):
@@ -50,9 +50,9 @@ class RateRuleCreate(BaseModel):
 
     name: str
     scope: Literal["GLOBAL", "PER_RECIPIENT"]
-    window_seconds: int
-    max_count: int
-    enabled: bool = True
+    window_seconds: StrictInt
+    max_count: StrictInt
+    enabled: StrictBool = True
 
 
 class RateRuleUpdate(BaseModel):
@@ -62,9 +62,9 @@ class RateRuleUpdate(BaseModel):
 
     name: str | None = None
     scope: Literal["GLOBAL", "PER_RECIPIENT"] | None = None
-    window_seconds: int | None = None
-    max_count: int | None = None
-    enabled: bool | None = None
+    window_seconds: StrictInt | None = None
+    max_count: StrictInt | None = None
+    enabled: StrictBool | None = None
 
 
 class RateRuleView(BaseModel):

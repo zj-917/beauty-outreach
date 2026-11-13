@@ -49,6 +49,11 @@ DEFAULT_TEMPLATE_BODY = (
 )
 
 
+def database_is_empty(session: Session) -> bool:
+    """Return True when no settings or keywords have been stored yet."""
+    return config_repo.is_empty(session)
+
+
 def seed_defaults(session: Session, clock: Clock) -> dict[str, int]:
     """Insert missing defaults and return created row counts per kind."""
     now = clock.now()

@@ -39,3 +39,12 @@ def test_AC_AUD_008_redact_text_keeps_iso_timestamps() -> None:
     """Given ISO timestamps, when redacted, then date-like runs are left intact."""
     assert redact_text("2026-11-14T09:00:00Z") == "2026-11-14T09:00:00Z"
     assert redact_text("2026-11-14 09:00:00") == "2026-11-14 09:00:00"
+
+
+def test_AC_AUD_008_redact_text_keeps_request_ids() -> None:
+    """Given a hex id or UUID, when redacted, then the id survives intact."""
+    hex_id = "fd6310fd8ad3411b9dd2da1153423259"
+    uuid = "123e4567-e89b-12d3-a456-426614174000"
+    assert redact_text(f"request_id={hex_id}") == f"request_id={hex_id}"
+    assert redact_text(f"request_id={uuid}") == f"request_id={uuid}"
+    assert redact_text("call +1 555-555-0101 now") == "call +1 5****0101 now"

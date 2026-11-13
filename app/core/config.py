@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     worker_enabled: bool = True
     tick_seconds: float = Field(default=1.0, gt=0)
     demo_mode: bool = True
+    seed_defaults: bool = False
     log_level: str = "INFO"
 
 

@@ -9,11 +9,20 @@ from typing import Any
 SENSITIVE_FIELD_NAMES = frozenset(
     {"body", "rendered_body", "token", "secret", "password", "key"}
 )
-_PHONE_LIKE = re.compile(r"\+?\d[\d\s\-]{7,}\d")
 _DATE_LIKE = re.compile(r"^\d{4}-\d{2}-\d{2}")
 _SENSITIVE_HEADER = re.compile(
     r"(?i)\b(x-admin-token|authorization|x-hub-signature-256)\b"
     r"\s*[:=]\s*(?:bearer\s+)?\S+"
+)
+_ID_OR_PHONE = re.compile(
+    r"(?<![0-9A-Za-z])"
+    r"(?P<id>"
+    r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-"
+    r"[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
+    r"|[0-9a-fA-F]{32}"
+    r")"
+    r"(?![0-9A-Za-z])"
+    r"|(?P<phone>\+?\d[\d\s\-]{7,}\d)"
 )
 
 
@@ -22,6 +31,12 @@ def _mask_phone_match(match: re.Match[str]) -> str:
     if _DATE_LIKE.match(value):
         return value
     return mask_phone(value)
+
+
+def _redact_match(match: re.Match[str]) -> str:
+    if match.group("id") is not None:
+        return match.group("id")
+    return _mask_phone_match(match)
 
 
 def mask_phone(value: object) -> str:
@@ -35,8 +50,8 @@ def mask_phone(value: object) -> str:
 
 
 def redact_text(text: str) -> str:
-    """Mask phone-like digit sequences inside free text, leaving dates intact."""
-    return _PHONE_LIKE.sub(_mask_phone_match, text)
+    """Mask phone-like digit sequences, leaving dates and hex ids intact."""
+    return _ID_OR_PHONE.sub(_redact_match, text)
 
 
 def redact_log_text(text: str) -> str:

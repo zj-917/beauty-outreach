@@ -47,6 +47,9 @@ def test_AC_CFG_001_keyword_crud_and_normalization(client: TestClient) -> None:
         {"term": "x", "kind": "POSITIVE", "weight": 51},
         {"term": "   ", "kind": "POSITIVE", "weight": 10},
         {"term": "x", "kind": "UNKNOWN", "weight": 10},
+        {"term": "x", "kind": "POSITIVE", "weight": True},
+        {"term": "x", "kind": "POSITIVE", "weight": "30"},
+        {"term": "x", "kind": "POSITIVE", "weight": 10, "enabled": "false"},
     ],
 )
 def test_AC_CFG_001_invalid_keyword_is_rejected(

@@ -40,6 +40,12 @@ def test_AC_CFG_008_last_global_cannot_be_removed_or_moved(
     )
     assert moved.status_code == 422
     assert moved.json()["error"]["code"] == "CFG_LAST_RATE_RULE"
+    rule = next(
+        item
+        for item in client.get("/api/v1/rate-rules").json()
+        if item["id"] == global_id
+    )
+    assert (rule["enabled"], rule["scope"]) == (True, "GLOBAL")
 
 
 def test_AC_CFG_008_last_recipient_rule_cannot_be_disabled(
