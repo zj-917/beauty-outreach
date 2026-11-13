@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+build/
+dist/
+
+# Local config & secrets
+.env
+
+# Runtime data (mock data files under data/ are tracked)
+data/*.db
+data/*.db-wal
+data/*.db-shm
+
+# Tool caches
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Editor / OS
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
+
+# External assignment material (not part of the deliverable)
+AI应用开发工程师 笔试题（校招）.pdf
