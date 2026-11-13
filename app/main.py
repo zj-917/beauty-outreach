@@ -15,6 +15,7 @@ from app.core.clock import Clock, SystemClock
 from app.core.config import Settings
 from app.core.db import build_engine, build_session_factory
 from app.core.logging import configure_logging
+from app.models import create_schema
 
 
 @asynccontextmanager
@@ -35,6 +36,7 @@ def create_app(
     configure_logging(settings.log_level)
     app = FastAPI(title="Beauty Outreach", version=APP_VERSION, lifespan=lifespan)
     engine = build_engine(settings)
+    create_schema(engine)
     app.state.settings = settings
     app.state.clock = clock or SystemClock()
     app.state.messenger = messenger

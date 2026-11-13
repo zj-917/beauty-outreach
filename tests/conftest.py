@@ -10,10 +10,13 @@ from pathlib import Path
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from sqlalchemy import Engine
 
 from app.core.clock import FakeClock
 from app.core.config import Settings
+from app.core.db import build_engine
 from app.main import create_app
+from app.models import create_schema
 
 FERNET_TEST_KEY = "ZmDfcTF7_60GrrY167zsiPd67pEvs0ouEkuFfKjGmS0="
 
@@ -61,6 +64,17 @@ def settings(tmp_path: Path) -> Settings:
 def app(settings: Settings, clock: FakeClock) -> FastAPI:
     """Application instance with injected fake clock and disabled worker."""
     return create_app(settings=settings, clock=clock)
+
+
+@pytest.fixture
+def db(settings: Settings) -> Iterator[Engine]:
+    """Fresh SQLite database with all tables, indexes and triggers."""
+    engine = build_engine(settings)
+    create_schema(engine)
+    try:
+        yield engine
+    finally:
+        engine.dispose()
 
 
 @pytest.fixture
