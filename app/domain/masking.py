@@ -10,10 +10,18 @@ SENSITIVE_FIELD_NAMES = frozenset(
     {"body", "rendered_body", "token", "secret", "password", "key"}
 )
 _PHONE_LIKE = re.compile(r"\+?\d[\d\s\-]{7,}\d")
+_DATE_LIKE = re.compile(r"^\d{4}-\d{2}-\d{2}")
 _SENSITIVE_HEADER = re.compile(
     r"(?i)\b(x-admin-token|authorization|x-hub-signature-256)\b"
     r"\s*[:=]\s*(?:bearer\s+)?\S+"
 )
+
+
+def _mask_phone_match(match: re.Match[str]) -> str:
+    value = match.group(0)
+    if _DATE_LIKE.match(value):
+        return value
+    return mask_phone(value)
 
 
 def mask_phone(value: object) -> str:
@@ -27,8 +35,8 @@ def mask_phone(value: object) -> str:
 
 
 def redact_text(text: str) -> str:
-    """Mask phone-like digit sequences inside free text."""
-    return _PHONE_LIKE.sub(lambda match: mask_phone(match.group(0)), text)
+    """Mask phone-like digit sequences inside free text, leaving dates intact."""
+    return _PHONE_LIKE.sub(_mask_phone_match, text)
 
 
 def redact_log_text(text: str) -> str:

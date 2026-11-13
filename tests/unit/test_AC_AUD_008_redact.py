@@ -33,3 +33,9 @@ def test_AC_AUD_008_redact_text_masks_phone_like_sequences() -> None:
     """Given free text with a phone-like sequence, when redacted, then the digits are masked."""
     assert redact_text("call +1 555-555-0101 now") == "call +1 5****0101 now"
     assert redact_text("order 12345") == "order 12345"
+
+
+def test_AC_AUD_008_redact_text_keeps_iso_timestamps() -> None:
+    """Given ISO timestamps, when redacted, then date-like runs are left intact."""
+    assert redact_text("2026-11-14T09:00:00Z") == "2026-11-14T09:00:00Z"
+    assert redact_text("2026-11-14 09:00:00") == "2026-11-14 09:00:00"
