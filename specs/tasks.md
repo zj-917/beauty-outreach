@@ -11,7 +11,7 @@
 | ☑ | T-00 | 项目脚手架：`pyproject`、应用工厂、`core/{config,db,clock,logging,errors}`、统一错误、鉴权、请求 ID 中间件、`/healthz`、`conftest`（FakeClock / 临时库 / 网络守卫）、架构守卫测试 | SYS-001, SYS-002, SYS-003, SYS-004, SYS-005, SYS-006, SYS-013, AUD-009 | — | 1.0h（实际 ≈0.5h，人工审查待补） | M1 |
 | ☑ | T-01 | ORM 模型（12 张表）、约束 / 索引、`audit_log` 触发器、SQLite PRAGMA 与 `BEGIN IMMEDIATE` 钩子 | SYS-008, AUD-003 | T-00 | 1.0h（实际 ≈0.6h，人工审查待补） | M1 |
 | ☑ | T-02 | 手机号与脱敏工具：规范化 / E.164、加密 / 哈希 / 掩码、`mask_phone`、`redact()`、日志过滤器 | AUD-007（单元部分）, AUD-008 | T-00 | 0.5h（实际 ≈0.4h，人工审查待补） | M1 |
-| ☐ | T-03 | 审计服务：同事务写入、哈希链与校验、查询 API | AUD-001, AUD-002, AUD-004, AUD-005, AUD-011 | T-01, T-02 | 1.0h | M1 |
+| ☑ | T-03 | 审计服务：同事务写入、哈希链与校验、查询 API | AUD-001, AUD-002, AUD-004, AUD-005, AUD-011 | T-01, T-02 | 1.0h（实际 ≈0.8h，人工审查待补） | M1 |
 | ☐ | T-04 | 配置管理与种子：关键词 / 频控 / 设置注册表 CRUD、环境变量启动校验、`seed.py` | CFG-001, CFG-002, CFG-003, CFG-004, CFG-006, CFG-007, CFG-008, SCR-011 | T-01, T-03 | 1.0h | M1 |
 | ☐ | T-05 | 线索导入：`LeadSource`（Mock / CsvJson / InstagramStub）、导入服务与 API、**`data/mock_leads.json` 与 `mock_blacklist.csv`（按 05 号文档）** | LEAD-001~013, LEAD-015 | T-02, T-03, T-04 | 2.0h | M1 |
 | ☐ | T-06 | 评分引擎（`domain/scoring`）+ 筛选服务与 API | SCR-001~010, SCR-012, SCR-013, SCR-015 | T-04, T-05 | 1.5h | M2 |

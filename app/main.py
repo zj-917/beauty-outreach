@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app import APP_VERSION
+from app.api.audit import router as audit_router
 from app.api.errors import register_exception_handlers
 from app.api.middleware import AdminAuthMiddleware, RequestContextMiddleware
 from app.api.system import router as system_router
@@ -49,6 +50,7 @@ def create_app(
     app.add_middleware(AdminAuthMiddleware, admin_token=settings.admin_token)
     app.add_middleware(RequestContextMiddleware)
     app.include_router(system_router)
+    app.include_router(audit_router)
     return app
 
 
