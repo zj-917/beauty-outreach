@@ -1,6 +1,6 @@
 # 04 API 契约（API Contract）
 
-> 版本 v1.0 · 状态 定稿（2026-11-13 冻结） · 字段细节以 `schemas/` 的 Pydantic 模型为准；本文件定义路径、语义、错误与 AC 对应。
+> 版本 v1.1 · 状态 定稿（2026-11-14 修订 Q-18） · 字段细节以 `schemas/` 的 Pydantic 模型为准；本文件定义路径、语义、错误与 AC 对应。
 
 ## 1. 约定
 
@@ -44,7 +44,7 @@
 | GET `/leads`、GET `/leads/{id}` | 过滤：`status`、`min_score`、`batch_id`、`q`、`region`、`language` | LEAD-015, POOL-002 |
 | POST `/leads/screen` | 触发评分与决策 | SCR-010/012/013 |
 | POST `/leads/{id}/review` | `{"decision":"APPROVE"\|"REJECT","note":"…"}` | POOL-003/005 |
-| POST `/leads/review-bulk` | ≤200 条，逐条结果 | POOL-004 |
+| POST `/leads/review-bulk` | 请求 `{"reviews":[{"lead_id":1,"decision":"APPROVE"\|"REJECT","note":"…"}]}`（≤200 条）；响应 `{"results":[{"lead_id":1,"ok":true}]}`，失败项附 `error:{code,message}` | POOL-004 |
 | GET `/pool` | 目标池（带"可触达预估"标记） | POOL-001/006 |
 | GET `/pool/export`、GET `/pool/stats` | P2 | POOL-007/008 |
 
