@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, InvalidToken
 
 
 def verify_admin_token(provided: str | None, expected: str) -> bool:
@@ -29,6 +29,13 @@ class PhoneCipher:
     def decrypt(self, token: str) -> str:
         """Decrypt an encrypted E.164 number."""
         return self._fernet.decrypt(token.encode("ascii")).decode("utf-8")
+
+    def try_decrypt(self, token: str) -> str | None:
+        """Decrypt a token, returning None when it is malformed or unreadable."""
+        try:
+            return self.decrypt(token)
+        except (InvalidToken, UnicodeError, ValueError):
+            return None
 
     def hash_phone(self, e164: str) -> str:
         """Return the stable HMAC-SHA256 hex digest of an E.164 number."""

@@ -28,6 +28,12 @@
 | Q-18 | **批量审核的请求 / 响应结构未定义**：`modules/pool.md` §3.2 只规定 ≤200 条、逐条独立处理与每条结果 `{lead_id, ok, error?}`，`04-api-contract.md` 未给示例 | 沿用 T-07 已实现的结构：请求 `{"reviews":[{lead_id, decision, note?}]}`，响应 `{"results":[{lead_id, ok, error?}]}`；每项独立提交，失败项返回 `error.code/message`（2026-11-14 人类确认） | POOL-004、T-07 测试、管理页批量审核 |
 | Q-19 | **模板草稿编辑端点与审计动作缺失**：`modules/template.md` §3.1 规定 `DRAFT` 可编辑、修改 `APPROVED` 的 body → 409 `TEMPLATE_IMMUTABLE`，AC-TPL-004 也要求「尝试修改 body」；但 `04-api-contract.md` 未列模板更新端点，`modules/audit.md` §4.2 的 action 注册表也没有 `TEMPLATE_UPDATED` | 补 `PATCH /templates/{id}`（`{body?, language?}`，仅 DRAFT 可改，APPROVED / DISABLED → 409 `TEMPLATE_IMMUTABLE`），新增审计动作 `TEMPLATE_UPDATED`；T-08 已按此实现（2026-11-14 人类确认） | TPL-004、T-08 测试、管理页配置页 |
 
+## 待决问题（T-09 新增，待人类确认）
+
+| 编号 | 问题 | 建议决议 | 影响 |
+|---|---|---|---|
+| Q-20 | **POOL-006 的 `delivery_readiness` 词表未覆盖 `INVALID_PHONE`**：发送闸门的 PHONE 闸门区分 `NO_PHONE` 与 `INVALID_PHONE`，但 `modules/pool.md` §3.3 的池值只有 `NO_PHONE` 等六种；当线索有密文但解密后不是 E.164 时如何标注未定义 | 池中把 `INVALID_PHONE` 归入 `NO_PHONE`（导入已丢弃非法号码，池词表保持六种）；发送闸门仍返回 `INVALID_PHONE`。T-09 已按此实现，确认后同步 pool.md §3.3 | POOL-006、pool.md §3.3、T-09 测试 |
+
 ## 变更记录
 
 | 版本 | 日期 | 变更 | 原因 | 影响文件 |

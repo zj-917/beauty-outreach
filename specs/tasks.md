@@ -17,7 +17,7 @@
 | ☑ | T-06 | 评分引擎（`domain/scoring`）+ 筛选服务与 API | SCR-001~010, SCR-012, SCR-013, SCR-015 | T-04, T-05 | 1.5h（实际 ≈2.1h） | M2 |
 | ☑ | T-07 | 目标池与人工审核（单条 / 批量）、池查询 | POOL-001~005 | T-06 | 1.0h（实际 ≈1.5h） | M2 |
 | ☑ | T-08 | 模板服务：版本化、审核、变量白名单、渲染（`domain/render`）、预览 | TPL-001~004, TPL-006~009 | T-04 | 1.0h（实际 ≈1.8h） | M2 |
-| ☐ | T-09 | 合规服务：consent、suppression、入站文本判定（服务层）、合规类闸门判定函数、静默时段；池的"可触达预估" | COMP-001, COMP-002, COMP-003, COMP-005, COMP-008~013, POOL-006 | T-05, T-07 | 1.5h | M2 |
+| ☑ | T-09 | 合规服务：consent、suppression、入站文本判定（服务层）、合规类闸门判定函数、静默时段；池的"可触达预估" | COMP-001, COMP-002, COMP-003, COMP-005, COMP-008~013, POOL-006 | T-05, T-07 | 1.5h（实际 ≈2.0h） | M2 |
 | ☐ | T-10 | Messenger 接口与实现：`MockMessenger`（确定性矩阵 / 幂等）、`WhatsAppCloudStub`、契约测试 | CAMP-030, CAMP-031 | T-00 | 1.0h | M3 |
 | ☐ | T-11 | 任务创建（目标快照、幂等键）、状态机、控制接口（start/pause/resume/cancel 的状态层）、任务 / 明细查询 | CAMP-001~004, CAMP-027, CAMP-029 | T-07, T-08, T-09 | 1.5h | M3 |
 | ☐ | T-12 | 发送引擎 A：Worker、原子认领与租约、Processor、完整闸门链、全局 / 单收件人频控、`send_log` | CAMP-005, CAMP-010~014, CAMP-018, CAMP-025, COMP-004, COMP-007, TPL-005 | T-09, T-10, T-11 | 2.0h | M3 |

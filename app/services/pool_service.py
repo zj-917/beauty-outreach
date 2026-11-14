@@ -8,9 +8,12 @@ from sqlalchemy.orm import Session
 
 from app.core.clock import Clock
 from app.core.errors import AppError
+from app.core.security import PhoneCipher
+from app.domain.gates import READINESS_VALUES
 from app.repositories import lead_repo
 from app.repositories.lead_repo import LeadEntry
 from app.services.audit_service import AuditService
+from app.services.compliance_service import ComplianceService
 
 _DECISIONS = frozenset({"APPROVE", "REJECT"})
 _TRANSITIONS: dict[str, dict[str, str]] = {
@@ -41,19 +44,59 @@ class ReviewOutcome:
     error_message: str | None = None
 
 
+@dataclass(frozen=True)
+class PoolItem:
+    """One pooled lead with its delivery-readiness label."""
+
+    lead: LeadEntry
+    delivery_readiness: str
+
+
+@dataclass(frozen=True)
+class PoolReport:
+    """One page of the pool plus readiness counts for the whole pool."""
+
+    items: list[PoolItem]
+    total: int
+    readiness_counts: dict[str, int]
+
+
 class PoolService:
     """Query the approved pool and apply manual review decisions."""
 
-    def __init__(self, clock: Clock, audit: AuditService | None = None) -> None:
+    def __init__(
+        self, clock: Clock, cipher: PhoneCipher, audit: AuditService | None = None
+    ) -> None:
         self._clock = clock
+        self._cipher = cipher
         self._audit = audit or AuditService(clock)
 
     def list_pool(
         self, session: Session, *, page: int = 1, page_size: int = 20
-    ) -> tuple[list[LeadEntry], int]:
-        """Return one page of APPROVED leads, highest score first."""
-        return lead_repo.list_pool(
+    ) -> PoolReport:
+        """Return one page of APPROVED leads with readiness labels and totals."""
+        entries, total = lead_repo.list_pool(
             session, offset=(page - 1) * page_size, limit=page_size
+        )
+        compliance = ComplianceService(self._clock, self._cipher, self._audit)
+        settings = compliance.settings(session)
+        counts = {value: 0 for value in READINESS_VALUES}
+        readiness_by_id: dict[int, str] = {}
+        for lead in lead_repo.list_all_pool(session):
+            label = compliance.readiness_for_lead(
+                session, lead, settings=settings
+            )
+            readiness_by_id[lead.id] = label
+            counts[label] += 1
+        items = [
+            PoolItem(
+                lead=entry,
+                delivery_readiness=readiness_by_id[entry.id],
+            )
+            for entry in entries
+        ]
+        return PoolReport(
+            items=items, total=total, readiness_counts=counts
         )
 
     def review(

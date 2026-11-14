@@ -300,6 +300,16 @@ def list_pool(
     return [_to_lead(row) for row in rows], total
 
 
+def list_all_pool(session: Session) -> list[LeadEntry]:
+    """Return every APPROVED lead, highest score first."""
+    rows = session.scalars(
+        select(Lead)
+        .where(Lead.status == "APPROVED")
+        .order_by(Lead.score.is_(None), Lead.score.desc(), Lead.id.desc())
+    ).all()
+    return [_to_lead(row) for row in rows]
+
+
 def update_review(
     session: Session,
     lead_id: int,
@@ -369,6 +379,16 @@ def find_consent(session: Session, phone_hash: str) -> ConsentEntry | None:
         select(ContactConsent).where(ContactConsent.phone_hash == phone_hash)
     )
     return _to_consent(row) if row is not None else None
+
+
+def list_consents(session: Session) -> list[ConsentEntry]:
+    """Return all consent records, most recently updated first."""
+    rows = session.scalars(
+        select(ContactConsent).order_by(
+            ContactConsent.updated_at.desc(), ContactConsent.id.desc()
+        )
+    ).all()
+    return [_to_consent(row) for row in rows]
 
 
 def create_consent(

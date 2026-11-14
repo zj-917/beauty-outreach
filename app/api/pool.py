@@ -14,6 +14,7 @@ from app.schemas.pool import (
     BulkReviewItemResult,
     BulkReviewRequest,
     BulkReviewResponse,
+    PoolLeadView,
     PoolPage,
     ReviewRequest,
 )
@@ -23,7 +24,11 @@ router = APIRouter(prefix="/api/v1", tags=["pool"])
 
 
 def _service(request: Request) -> PoolService:
-    return PoolService(request.app.state.clock, request.app.state.audit_service)
+    return PoolService(
+        request.app.state.clock,
+        request.app.state.phone_cipher,
+        request.app.state.audit_service,
+    )
 
 
 def _request_id(request: Request) -> str | None:
@@ -37,15 +42,25 @@ def list_pool(
     page: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Query(ge=1, le=100)] = 20,
 ) -> PoolPage:
-    """Return one page of approved leads, highest score first."""
-    entries, total = _service(request).list_pool(
+    """Return one page of approved leads with readiness labels and counts."""
+    report = _service(request).list_pool(
         session, page=page, page_size=page_size
     )
+    items = []
+    for item in report.items:
+        base = LeadView.model_validate(item.lead)
+        items.append(
+            PoolLeadView(
+                **base.model_dump(),
+                delivery_readiness=item.delivery_readiness,
+            )
+        )
     return PoolPage(
-        items=[LeadView.model_validate(entry) for entry in entries],
-        total=total,
+        items=items,
+        total=report.total,
         page=page,
         page_size=page_size,
+        readiness_counts=report.readiness_counts,
     )
 
 

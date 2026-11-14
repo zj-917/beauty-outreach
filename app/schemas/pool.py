@@ -57,10 +57,24 @@ class BulkReviewResponse(BaseModel):
     results: list[BulkReviewItemResult]
 
 
-class PoolPage(BaseModel):
-    """Paginated approved-lead pool."""
+class PoolLeadView(LeadView):
+    """Approved lead with its compliance delivery-readiness label."""
 
-    items: list[LeadView]
+    delivery_readiness: Literal[
+        "READY",
+        "BLACKLISTED",
+        "UNSUBSCRIBED",
+        "NO_PHONE",
+        "NO_CONSENT",
+        "CONSENT_REVOKED",
+    ]
+
+
+class PoolPage(BaseModel):
+    """Paginated approved-lead pool with readiness counts."""
+
+    items: list[PoolLeadView]
     total: int
     page: int
     page_size: int
+    readiness_counts: dict[str, int]
