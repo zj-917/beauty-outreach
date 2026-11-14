@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 from sqlalchemy.orm import Session
 
@@ -33,10 +33,18 @@ class Previewer:
         self._facts = GateFacts(clock, cipher)
 
     def preview(self, session: Session, task: CampaignEntry) -> PreviewReport:
-        """Return how the open items would be decided if processing started now."""
+        """Return how the open items would be decided if processing started now.
+
+        A DRAFT task is previewed as if it had just been started, so the wizard
+        can show gate 2-7 outcomes before ``start``; other non-running tasks
+        keep the gate-1 release semantics.
+        """
         items = campaign_repo.list_open_items(session, task.id)
         template = template_repo.get_template(session, task.template_id)
         settings = load_runtime_settings(session)
+        effective_task = (
+            replace(task, status="RUNNING") if task.status == "DRAFT" else task
+        )
         will_attempt = 0
         will_release = 0
         will_skip: dict[str, int] = {}
@@ -45,7 +53,7 @@ class Previewer:
             facts = self._facts.build(
                 session,
                 item=item,
-                task=task,
+                task=effective_task,
                 lead=lead,
                 template=template,
                 settings=settings,

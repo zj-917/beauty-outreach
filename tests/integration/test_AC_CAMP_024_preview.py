@@ -146,6 +146,42 @@ def test_AC_CAMP_024_preview_releases_when_task_is_not_running(
     assert body["will_skip"] == {}
 
 
+def test_AC_CAMP_024_preview_of_draft_task_evaluates_gates_2_to_7(
+    client: TestClient, db: Engine, clock: FakeClock, make_lead
+) -> None:
+    """Given a DRAFT task, when previewing before start, then gates 2-7 decide."""
+    template_id = _seed(client, db, clock)
+    blocked = make_lead(username="draft_blocked", phone="+15555550851")
+    no_consent = make_lead(
+        username="draft_noconsent", phone="+15555550852", consent=None
+    )
+    ready = make_lead(username="draft_ready", phone="+15555550853")
+    assert (
+        client.post(
+            "/api/v1/suppressions",
+            json={"type": "BLACKLIST", "phone": "+15555550851", "reason": "legal"},
+        ).status_code
+        == 201
+    )
+    campaign_id = client.post(
+        "/api/v1/campaigns",
+        json={
+            "name": "draft preview",
+            "template_id": template_id,
+            "selection": {"lead_ids": [blocked, no_consent, ready]},
+        },
+    ).json()["id"]
+
+    body = client.post(f"/api/v1/campaigns/{campaign_id}/preview").json()
+
+    assert body["total_items"] == 3
+    assert body["will_attempt"] == 1
+    assert body["will_skip"] == {"BLACKLISTED": 1, "NO_CONSENT": 1}
+    assert body["will_release"] == 0
+    detail = client.get(f"/api/v1/campaigns/{campaign_id}").json()
+    assert detail["status"] == "DRAFT"
+
+
 def test_AC_CAMP_024_preview_counts_only_open_items(
     client: TestClient,
     db: Engine,

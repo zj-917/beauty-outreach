@@ -145,6 +145,7 @@ tests/         unit / integration / contract / e2e
 | `docs/data-model.md` | 12 张表、状态机、数据不变量与核心流程时序 |
 | `docs/compliance-risk.md` | Mock 与真实平台的差异、合规设计、风险清单与生产化路径 |
 | `docs/ai-usage.md` | AI 编程助手的使用方式、任务记录与真实踩坑（答辩素材） |
+| `docs/demo-script.md` | 10 分钟演示与答辩脚本（含彩排与克隆验证记录） |
 | `docs/ac-coverage.md` | AC → 测试对照表（自动生成） |
 | `docs/ui-checklist.md` | 管理页手动验收清单 |
 | `specs/` | SDD 规格（唯一事实来源，入口 `specs/00-constitution.md`） |

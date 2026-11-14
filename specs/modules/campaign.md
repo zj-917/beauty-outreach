@@ -118,6 +118,7 @@ Processor 对每条被认领的明细按**固定顺序**判定，**首个非放�
 ## 10. 干跑预览（P1）
 
 `POST /campaigns/{id}/preview`：对所有非终态明细**只读**评估闸门 1–7（不含时间相关的 8–9），返回 `{will_attempt, will_skip: {reason: n}, readiness_by_lead?}`。**无副作用**：不写 `send_log`、不调用 Messenger、不改明细。注明"频控延迟与静默时段未模拟"。
+**DRAFT 任务按"即将启动"预览**（闸门 1 放行，等价于 `RUNNING`），否则创建后、启动前的干跑预览会被闸门 1 全部判为释放；其它非 `RUNNING` 状态（如 `PAUSED`）仍按闸门 1 释放，表示当前不会处理。
 
 ## 11. 原因码注册表
 
