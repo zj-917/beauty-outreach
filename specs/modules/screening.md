@@ -1,6 +1,6 @@
 # 模块规格：screening（筛选与相关性评分）
 
-> 版本 v1.0 · 状态 定稿（2026-11-13 冻结） · 依赖：`domain/scoring`、`config`（keyword / settings）、`audit`
+> 版本 v1.1 · 状态 定稿（2026-11-14 修订 Q-13/Q-14） · 依赖：`domain/scoring`、`config`（keyword / settings）、`audit`
 
 ## 1. 目标
 
@@ -43,7 +43,7 @@
 每项 `{"code","detail","delta"}`：`KW_POS`（detail 如 `bio:beauty device`）、`KW_NEG`、`REGION_MATCH` / `REGION_MISMATCH`、`LANG_MATCH` / `LANG_MISMATCH`、`BIO_TOO_SHORT`；若发生截断追加 `CLAMP`（`delta = score − raw`）。**不变量：所有 `delta` 之和恒等于 `score`。**
 
 ### 3.5 `top_keyword`
-贡献最大的**正向**关键词（并列取 `term` 字典序最小）；无正向命中为 `null`。供模板变量 `{{keyword}}` 使用。
+贡献最大的**正向**关键词（并列取 `term` 字典序最小）；无正向命中为 `null`。供模板变量 `{{keyword}}` 使用。贡献为 0 的命中（如 `weight=1` 只命中 display_name / username）不计入 `reasons`，也不参与 `top_keyword`。
 
 ## 4. 决策规则
 
@@ -57,9 +57,9 @@
 
 ## 5. 运行与重新评分
 
-- `POST /leads/screen`（可选 `batch_id` / `lead_ids`）：对 `status ∈ {NEW, PENDING_REVIEW, DISCARDED}` 的线索评分并决策。
+- `POST /leads/screen`（可选 `batch_id` / `lead_ids`，两者同时给出时取交集）：对 `status ∈ {NEW, PENDING_REVIEW, DISCARDED}` 的线索评分并决策。
 - **人工决定具有粘性**：`APPROVED` / `REJECTED`（无论 `decision_source`）都不被重新评分改变——这是有意的取舍（自动入池后即使关键词调整也不撤回；运营可手动移出）。
-- 返回 `{processed, approved, pending_review, discarded, unchanged}`。
+- 返回 `{processed, approved, pending_review, discarded, unchanged}`。计数定义：`processed` = 本次进入重算的线索数；`approved` / `pending_review` / `discarded` = 重算后落入各状态的条数，三者之和等于 `processed`；`unchanged` = 其中状态与重算前相同的条数。`APPROVED` / `REJECTED` 不进入候选，也不计入上述任何计数。
 - 每次运行写**一条** `LEAD_SCREENING_RUN` 审计（含计数与阈值快照），不逐条写。
 
 ## 6. 初始关键词与权重（种子数据，可在配置页调整）

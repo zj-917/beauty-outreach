@@ -152,18 +152,23 @@ def _field_texts(lead: LeadFields) -> dict[str, str]:
 
 def _prepare(
     keywords: Sequence[KeywordRule],
-) -> list[tuple[str, str, int]]:
+) -> tuple[tuple[str, str, int], ...]:
+    return _prepare_cached(tuple(keywords))
+
+
+@lru_cache(maxsize=64)
+def _prepare_cached(keywords: tuple[KeywordRule, ...]) -> tuple[tuple[str, str, int], ...]:
     prepared = []
     for rule in keywords:
         term = normalize_text(rule.term)
         if term:
             prepared.append((term, rule.kind, rule.weight))
     prepared.sort(key=lambda item: (-len(item[0]), item[0], item[1]))
-    return prepared
+    return tuple(prepared)
 
 
 def _match_keywords(
-    texts: dict[str, str], prepared: list[tuple[str, str, int]]
+    texts: dict[str, str], prepared: Sequence[tuple[str, str, int]]
 ) -> tuple[list[Reason], list[tuple[int, str]]]:
     occupied = {field: bytearray(len(text)) for field, text in texts.items()}
     reasons: list[Reason] = []
@@ -234,7 +239,7 @@ def score_lead(
     if language_reason is not None:
         reasons.append(language_reason)
 
-    bio_length = len(texts["bio"])
+    bio_length = len((lead.bio or "").strip())
     if bio_length < config.short_bio_min_len:
         reasons.append(
             Reason(

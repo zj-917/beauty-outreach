@@ -2,9 +2,9 @@
 
 > 规则（SDD 变更控制）：实现中发现 spec 歧义 / 矛盾 / 缺失 → 停 → 在「待决问题」追加 → 人类确认 → **先改 spec，再改代码** → 在「变更记录」登记。
 
-## 待决问题（v1.0–v1.1 已全部决议，2026-11-14）
+## 待决问题（v1.0–v1.2 已全部决议，2026-11-14）
 
-> 以下 12 项已由人类逐条确认，全部按第三列「最终决议」执行；Q-9 ~ Q-11 已同步修订对应 AC 文本，Q-12 于 2026-11-14 确认并修订 lead.md §4.3–§4.4。后续再发现歧义时继续按同一流程追加。
+> 以下 14 项已由人类逐条确认，全部按第三列「最终决议」执行；Q-9 ~ Q-11 已同步修订对应 AC 文本，Q-12 修订 lead.md §4.3–§4.4，Q-13/Q-14 修订 screening.md §3.5、§5。后续再发现歧义时继续按同一流程追加。
 
 | 编号 | 问题 | 最终决议（人类已确认） | 影响 |
 |---|---|---|---|
@@ -20,6 +20,8 @@
 | Q-10 | **AC-LEAD-011 重复导入计数**："第二次 imported=0 且全部计入 duplicates" 与 F 类非法行每次仍应判 invalid 有出入 | 第二次导入：`imported=0, duplicates=48, invalid=4, warnings=1`（duplicates 指 A–E 类合法行） | LEAD-011、demo 断言 |
 | Q-11 | **start 的 Provider 前置检查**：SYS-006 要求 `MESSENGER_PROVIDER=whatsapp_cloud` 时 start 返回 501，但 campaign.md §4 未列该前置条件、检查顺序及失败时任务状态 | 顺序 = 模板 APPROVED → 存在非终态明细 → Provider 可用；失败时任务状态不变，Provider 不可用 → 501 `PROVIDER_NOT_ENABLED` | CAMP-004/027、SYS-006 |
 | Q-12 | **合并补号码的归属与重复行授权**：lead.md §4.3 允许合并时补全「此前缺失的号码」，但可能与「一个收件人一条线索」冲突；`DUPLICATE_PHONE` 行携带的授权是否应用未写明 | 补号码前若该 `phone_hash` 已属于另一条线索 → `IMPORT_CONFLICT`、不补号码；行合法且号码有效时，`DUPLICATE_PHONE` 行仍按 §4.4 应用授权（`IMPORT_CONFLICT` 除外） | LEAD-005/009、T-05 |
+| Q-13 | **`POST /leads/screen` 的 `unchanged` 含义**：screening.md §5 只列字段未定义；可能是「重算后状态未变」或「被粘性规则跳过」 | 取「本次进入重算且状态未变」的条数；`processed` 为候选数，`approved + pending_review + discarded = processed`；`APPROVED/REJECTED` 不计入任何计数 | SCR-010/012/013 |
+| Q-14 | **零贡献命中是否计入 reasons / top_keyword**：weight=1 只命中 display_name / username 时贡献为 `floor(1/2)=0`，spec 未说明 | 贡献为 0 的命中不计入 `reasons`，也不参与 `top_keyword` | SCR-009/015 |
 
 ## 变更记录
 
@@ -28,3 +30,4 @@
 | v0.1 | 2026-11-13 | 初稿：宪法、概览、架构、数据模型、API 契约、Mock 数据、9 个模块规格、测试计划、排期与任务清单 | — | 全部 |
 | v1.0 | 2026-11-13 | M0 定稿：Q-1~Q-11 全部确认；修订 AC-SYS-003（OpenAPI 清单排除 P2）、AC-LEAD-011（二次导入计数）、campaign §4（start 前置检查顺序含 Provider）；AGENTS.md 新增「按任务裁剪阅读」规则 | 人类评审定稿，spec 冻结 | 全部 specs 头部版本；modules/system.md、modules/lead.md、modules/campaign.md；AGENTS.md、tasks.md；docs/ai-usage.md |
 | v1.1 | 2026-11-14 | Q-12 确认并修订 lead.md §4.3–§4.4：合并补号码不得抢占其他线索的号码（→ `IMPORT_CONFLICT`）；`DUPLICATE_PHONE` 行仍应用合法授权 | T-05 实现评审发现 spec 内部矛盾 | modules/lead.md；CHANGELOG.md；T-05 代码与测试 |
+| v1.2 | 2026-11-14 | Q-13/Q-14 确认并修订 screening.md §3.5、§5：定义 `processed/unchanged` 等计数；零贡献命中不计入 reasons / top_keyword；补充 `batch_id` 与 `lead_ids` 取交集 | T-06 实现评审发现字段定义缺失 | modules/screening.md；CHANGELOG.md；T-06 代码与测试 |

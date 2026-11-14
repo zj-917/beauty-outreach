@@ -45,3 +45,19 @@ def test_AC_SCR_013_each_run_writes_one_audit_row(
     ).json()
     assert logs["total"] == 2
     assert logs["items"][0]["after"]["processed"] == 24
+
+
+def test_AC_SCR_013_batch_run_is_recorded_against_the_batch(
+    client: TestClient, db: Engine, clock: FakeClock
+) -> None:
+    """Given a batch-scoped run, then the audit points at the batch."""
+    with Session(db) as session:
+        seed_defaults(session, clock)
+    response = client.post("/api/v1/lead-batches/import", json={"source": "mock"})
+    batch_id = response.json()["id"]
+    client.post("/api/v1/leads/screen", json={"batch_id": batch_id})
+    item = client.get(
+        "/api/v1/audit-logs", params={"action": "LEAD_SCREENING_RUN"}
+    ).json()["items"][0]
+    assert (item["entity_type"], item["entity_id"]) == ("lead_batch", str(batch_id))
+    assert item["after"]["batch_id"] == batch_id

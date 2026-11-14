@@ -86,3 +86,32 @@ def test_AC_SCR_010_screening_can_target_ids(
     body = client.post("/api/v1/leads/screen", json={"lead_ids": ids}).json()
     assert body["processed"] == 2
     assert body["approved"] + body["pending_review"] + body["discarded"] == 2
+
+
+def test_AC_SCR_010_screening_can_target_batch(
+    client: TestClient, db: Engine, clock: FakeClock
+) -> None:
+    """Given a batch id, when screening, then only that batch is processed."""
+    _seed(db, clock)
+    response = client.post("/api/v1/lead-batches/import", json={"source": "mock"})
+    batch_id = response.json()["id"]
+    body = client.post("/api/v1/leads/screen", json={"batch_id": batch_id}).json()
+    assert (body["processed"], body["approved"], body["pending_review"]) == (44, 20, 8)
+    missing = client.post("/api/v1/leads/screen", json={"batch_id": 999}).json()
+    assert missing["processed"] == 0
+
+
+def test_AC_SCR_010_sticky_leads_are_excluded_even_when_requested_by_id(
+    client: TestClient, db: Engine, clock: FakeClock
+) -> None:
+    """Given an APPROVED lead id, when screening, then it is not reprocessed."""
+    _seed(db, clock)
+    _import_mock(client)
+    client.post("/api/v1/leads/screen")
+    approved_id = client.get(
+        "/api/v1/leads", params={"status": "APPROVED"}
+    ).json()["items"][0]["id"]
+    body = client.post(
+        "/api/v1/leads/screen", json={"lead_ids": [approved_id]}
+    ).json()
+    assert body["processed"] == 0

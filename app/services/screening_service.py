@@ -114,12 +114,21 @@ class ScreeningService:
             after["warning"] = warning
         if batch_id is not None:
             after["batch_id"] = batch_id
+            entity_type = "lead_batch"
+            entity_id = str(batch_id)
+        elif lead_ids is not None:
+            after["selected"] = len(lead_ids)
+            entity_type = "lead"
+            entity_id = "selected"
+        else:
+            entity_type = "lead"
+            entity_id = "all"
         self._audit.record(
             session,
             actor=operator,
             action="LEAD_SCREENING_RUN",
-            entity_type="lead_batch" if batch_id is not None else "lead",
-            entity_id=str(batch_id) if batch_id is not None else "all",
+            entity_type=entity_type,
+            entity_id=entity_id,
             after=after,
             request_id=request_id,
         )

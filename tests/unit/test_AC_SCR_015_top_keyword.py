@@ -38,3 +38,13 @@ def test_AC_SCR_015_no_positive_hit_means_null() -> None:
     rules = [KeywordRule("wholesale", "NEGATIVE", 30)]
     result = score_lead(_lead("wholesale only"), rules, CONFIG)
     assert result.top_keyword is None
+
+
+def test_AC_SCR_015_zero_contribution_hits_are_ignored() -> None:
+    """Given a weight-1 hit only in display_name, then it adds no reason and no top keyword."""
+    rules = [KeywordRule("beauty device", "POSITIVE", 1)]
+    lead = LeadFields("someone", "beauty device", "nothing relevant here at all", None, None)
+    result = score_lead(lead, rules, CONFIG)
+    assert result.score == 0
+    assert result.reasons == ()
+    assert result.top_keyword is None
