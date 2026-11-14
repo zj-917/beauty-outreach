@@ -1,6 +1,6 @@
 # 04 API 契约（API Contract）
 
-> 版本 v1.1 · 状态 定稿（2026-11-14 修订 Q-18） · 字段细节以 `schemas/` 的 Pydantic 模型为准；本文件定义路径、语义、错误与 AC 对应。
+> 版本 v1.2 · 状态 定稿（2026-11-14 修订 Q-19） · 字段细节以 `schemas/` 的 Pydantic 模型为准；本文件定义路径、语义、错误与 AC 对应。
 
 ## 1. 约定
 
@@ -32,6 +32,7 @@
 | 方法 路径 | 说明 | AC |
 |---|---|---|
 | GET/POST `/templates`、GET `/templates/{id}` | 列表 / 创建 v1(DRAFT) / 详情 | TPL-001/002/003 |
+| PATCH `/templates/{id}` | 编辑 DRAFT 的 `body` / `language`；APPROVED / DISABLED → 409 `TEMPLATE_IMMUTABLE` | TPL-004 |
 | POST `/templates/{id}/new-version` | 基于某版本创建 `version+1`(DRAFT) | TPL-004 |
 | POST `/templates/{id}/approve`、`/disable` | 审核通过 / 停用 | TPL-004/005 |
 | POST `/templates/preview` | 用示例或指定 lead 渲染，无副作用 | TPL-009 |

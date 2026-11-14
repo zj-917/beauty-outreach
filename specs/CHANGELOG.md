@@ -2,9 +2,9 @@
 
 > 规则（SDD 变更控制）：实现中发现 spec 歧义 / 矛盾 / 缺失 → 停 → 在「待决问题」追加 → 人类确认 → **先改 spec，再改代码** → 在「变更记录」登记。
 
-## 待决问题（v1.0–v1.4 已全部决议，2026-11-14）
+## 待决问题（v1.0–v1.5 已全部决议，2026-11-14）
 
-> 以下 18 项已由人类逐条确认，全部按第三列「最终决议」执行；Q-9 ~ Q-11 已同步修订对应 AC 文本，Q-12 修订 lead.md §4.3–§4.4，Q-13/Q-14 修订 screening.md §3.5、§5，Q-15 修订 02-architecture §5、modules/audit.md §4.1、modules/system.md 与 AC-SYS-008，Q-16 修订 config-stats 的审计语义，Q-17 修订 03-data-model §2.3、§2.6、§4 与 05-mock-data §6，Q-18 修订 04-api-contract.md 与 modules/pool.md §3.2。后续再发现歧义时继续按同一流程追加。
+> 以下 19 项已由人类逐条确认，全部按第三列「最终决议」执行；Q-9 ~ Q-11 已同步修订对应 AC 文本，Q-12 修订 lead.md §4.3–§4.4，Q-13/Q-14 修订 screening.md §3.5、§5，Q-15 修订 02-architecture §5、modules/audit.md §4.1、modules/system.md 与 AC-SYS-008，Q-16 修订 config-stats 的审计语义，Q-17 修订 03-data-model §2.3、§2.6、§4 与 05-mock-data §6，Q-18 修订 04-api-contract.md 与 modules/pool.md §3.2，Q-19 修订 04-api-contract.md、modules/template.md §3.1/§4 与 modules/audit.md §4.2。后续再发现歧义时继续按同一流程追加。
 
 | 编号 | 问题 | 最终决议（人类已确认） | 影响 |
 |---|---|---|---|
@@ -26,12 +26,7 @@
 | Q-16 | **no-op 配置更新的审计语义**：关键词 / 频控 PATCH 提交与现值相同的字段时仍写 `*_UPDATED` 审计，而同类的 `PUT /settings` 会跳过无变化项；AC-CFG-004 只说「任一配置变更」 | 无变化（`before == after`）不写审计，直接返回原对象，与 settings 的语义对齐 | CFG-004、T-04 |
 | Q-17 | **数据模型三处缺失约束**：`template` 无 `version >= 1`；`lead.batch_id` 无索引；`lead.phone_hash` 仅普通索引，「一个号码至多一条线索」只靠服务层 | 补 `CHECK(version >= 1)`、`Index(batch_id)`、`phone_hash` 部分唯一索引（`WHERE phone_hash IS NOT NULL`，同 suppression 款式），并在 03-data-model 新增 INV-11；原型无 Alembic，重建库即可 | 03-data-model、SYS-008、T-01/T-05 |
 | Q-18 | **批量审核的请求 / 响应结构未定义**：`modules/pool.md` §3.2 只规定 ≤200 条、逐条独立处理与每条结果 `{lead_id, ok, error?}`，`04-api-contract.md` 未给示例 | 沿用 T-07 已实现的结构：请求 `{"reviews":[{lead_id, decision, note?}]}`，响应 `{"results":[{lead_id, ok, error?}]}`；每项独立提交，失败项返回 `error.code/message`（2026-11-14 人类确认） | POOL-004、T-07 测试、管理页批量审核 |
-
-## 待决问题（T-08 新增，待人类确认）
-
-| 编号 | 问题 | 建议决议 | 影响 |
-|---|---|---|---|
-| Q-19 | **模板草稿编辑端点与审计动作缺失**：`modules/template.md` §3.1 规定 `DRAFT` 可编辑、修改 `APPROVED` 的 body → 409 `TEMPLATE_IMMUTABLE`，AC-TPL-004 也要求「尝试修改 body」；但 `04-api-contract.md` 未列模板更新端点，`modules/audit.md` §4.2 的 action 注册表也没有 `TEMPLATE_UPDATED` | 补 `PATCH /templates/{id}`（`{body?, language?}`，仅 DRAFT 可改，APPROVED / DISABLED → 409 `TEMPLATE_IMMUTABLE`），并新增审计动作 `TEMPLATE_UPDATED`；T-08 已按此实现，确认后同步 04-api-contract、template.md §3.1/§4 与 audit.md §4.2 | TPL-004、T-08 测试、管理页配置页 |
+| Q-19 | **模板草稿编辑端点与审计动作缺失**：`modules/template.md` §3.1 规定 `DRAFT` 可编辑、修改 `APPROVED` 的 body → 409 `TEMPLATE_IMMUTABLE`，AC-TPL-004 也要求「尝试修改 body」；但 `04-api-contract.md` 未列模板更新端点，`modules/audit.md` §4.2 的 action 注册表也没有 `TEMPLATE_UPDATED` | 补 `PATCH /templates/{id}`（`{body?, language?}`，仅 DRAFT 可改，APPROVED / DISABLED → 409 `TEMPLATE_IMMUTABLE`），新增审计动作 `TEMPLATE_UPDATED`；T-08 已按此实现（2026-11-14 人类确认） | TPL-004、T-08 测试、管理页配置页 |
 
 ## 变更记录
 
@@ -43,3 +38,4 @@
 | v1.2 | 2026-11-14 | Q-13/Q-14 确认并修订 screening.md §3.5、§5：定义 `processed/unchanged` 等计数；零贡献命中不计入 reasons / top_keyword；补充 `batch_id` 与 `lead_ids` 取交集 | T-06 实现评审发现字段定义缺失 | modules/screening.md；CHANGELOG.md；T-06 代码与测试 |
 | v1.3 | 2026-11-14 | Q-15/Q-16/Q-17 确认：事务统一 `BEGIN IMMEDIATE`（含只读）；配置无变化不写审计；补 `template.version >= 1`、`lead.batch_id` 索引、`lead.phone_hash` 部分唯一索引（INV-11）与评测分母说明 | T-00～T-06 统一遗留问题评审 | 02-architecture.md、modules/audit.md、modules/system.md、modules/config-stats.md、03-data-model.md、05-mock-data.md、CHANGELOG.md；T-01/T-04/T-05 相关模型与测试 |
 | v1.4 | 2026-11-14 | Q-18 确认：批量审核请求体固定为 `{"reviews":[{lead_id, decision, note?}]}`，响应 `{"results":[{lead_id, ok, error?}]}`，每项独立提交；同步接口契约与模块规格 | T-07 实现评审确认结构，避免管理页与后端各自猜测 | 04-api-contract.md、modules/pool.md、CHANGELOG.md |
+| v1.5 | 2026-11-14 | Q-19 确认：新增 `PATCH /templates/{id}`（仅 DRAFT 可编辑）与审计动作 `TEMPLATE_UPDATED`；同步接口契约、模板规格与审计动作表 | T-08 实现评审确认草稿编辑路径与审计语义 | 04-api-contract.md、modules/template.md、modules/audit.md、CHANGELOG.md |

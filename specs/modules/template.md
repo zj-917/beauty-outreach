@@ -1,6 +1,6 @@
 # 模块规格：template（问候模板与个性化变量）
 
-> 版本 v1.0 · 状态 定稿（2026-11-13 冻结） · 依赖：`domain/render`、config（`message.brand` / `message.optout_text`）、audit
+> 版本 v1.1 · 状态 定稿（2026-11-14 修订 Q-19） · 依赖：`domain/render`、config（`message.brand` / `message.optout_text`）、audit
 
 ## 1. 目标
 
@@ -17,6 +17,7 @@
 - 创建 → `version=1`、`status=DRAFT`。`(name, version)` 唯一。
 - `body` ≤ **800** 字符（给渲染后的变量与页脚留余量；渲染结果另受 1024 字符上限约束）。
 - `DRAFT` 可编辑；`APPROVED` 的 `body` **不可变**（409 `TEMPLATE_IMMUTABLE`）；要修改 → `POST /templates/{id}/new-version` 创建 `version+1`（`DRAFT`）。
+- 草稿编辑走 `PATCH /templates/{id}`（`body` / `language`），写 `TEMPLATE_UPDATED` 审计；无变化不写审计；非 `DRAFT` 状态返回 409 `TEMPLATE_IMMUTABLE`。
 - `approve`：`DRAFT → APPROVED`，记录 `approved_by/at`，写审计。`disable`：任意状态 → `DISABLED`，不可再用于新任务。
 
 ### 3.2 变量
@@ -58,6 +59,7 @@ Hi {{name|there}}, greetings from {{brand}}! We noticed you share content about 
 ```python
 class TemplateService:
     def create(self, name: str, body: str, language: str, operator: str) -> Template
+    def update(self, template_id: int, body: str | None, language: str | None, operator: str) -> Template
     def new_version(self, template_id: int, body: str, operator: str) -> Template
     def approve(self, template_id: int, operator: str) -> Template
     def disable(self, template_id: int, operator: str) -> Template
