@@ -16,7 +16,9 @@ from app.schemas.campaign import (
     CampaignItemView,
     CampaignPage,
     CampaignPreviewResponse,
+    CampaignTimelineResponse,
     CampaignView,
+    TimelineEvent,
 )
 from app.services.campaign_service import CampaignReport, CampaignService
 
@@ -103,6 +105,31 @@ def get_campaign(
 ) -> CampaignView:
     """Return one campaign with its summary counts."""
     return _view(_service(request).get_campaign(session, campaign_id))
+
+
+@router.get("/{campaign_id}/timeline", response_model=CampaignTimelineResponse)
+def campaign_timeline(
+    request: Request,
+    campaign_id: int,
+    session: Annotated[Session, Depends(get_session)],
+) -> CampaignTimelineResponse:
+    """Return the campaign's lifecycle events in ascending time order."""
+    entries = _service(request).timeline(session, campaign_id)
+    return CampaignTimelineResponse(
+        task_id=campaign_id,
+        events=[
+            TimelineEvent(
+                id=entry.id,
+                ts=entry.ts,
+                event=entry.action.removeprefix("CAMPAIGN_"),
+                actor=entry.actor,
+                request_id=entry.request_id,
+                before=entry.before,
+                after=entry.after,
+            )
+            for entry in entries
+        ],
+    )
 
 
 @router.get("/{campaign_id}/items", response_model=CampaignItemPage)

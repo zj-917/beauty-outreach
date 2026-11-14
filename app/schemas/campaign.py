@@ -88,6 +88,25 @@ class CampaignPreviewResponse(BaseModel):
     note: str = "Rate-limit deferrals and quiet hours are not simulated"
 
 
+class TimelineEvent(BaseModel):
+    """One CAMPAIGN_* audit event with the action prefix removed."""
+
+    id: int
+    ts: UtcDatetime
+    event: str
+    actor: str
+    request_id: str | None = None
+    before: dict[str, Any] | None = None
+    after: dict[str, Any] | None = None
+
+
+class CampaignTimelineResponse(BaseModel):
+    """Campaign lifecycle events in ascending time order."""
+
+    task_id: int
+    events: list[TimelineEvent]
+
+
 class CampaignItemView(BaseModel):
     """One task item; the full phone and rendered body are never exposed."""
 

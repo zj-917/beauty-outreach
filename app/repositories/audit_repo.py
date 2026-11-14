@@ -107,6 +107,20 @@ def list_entries(
     return [_to_entry(row) for row in rows], total
 
 
+def list_campaign_events(session: Session, campaign_id: int) -> list[AuditEntry]:
+    """Return the CAMPAIGN_* audit rows of one task in ascending order."""
+    rows = session.scalars(
+        select(AuditLog)
+        .where(
+            AuditLog.entity_type == "campaign",
+            AuditLog.entity_id == str(campaign_id),
+            AuditLog.action.startswith("CAMPAIGN_", autoescape=True),
+        )
+        .order_by(AuditLog.ts.asc(), AuditLog.id.asc())
+    ).all()
+    return [_to_entry(row) for row in rows]
+
+
 def all_entries(session: Session) -> list[AuditEntry]:
     """Return every audit row in append order for chain verification."""
     rows = session.scalars(select(AuditLog).order_by(AuditLog.id.asc())).all()

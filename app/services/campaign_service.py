@@ -13,7 +13,8 @@ from app.core.errors import AppError
 from app.core.security import PhoneCipher
 from app.domain.state import Transition, transition
 from app.engine.preview import Previewer, PreviewReport
-from app.repositories import campaign_repo, lead_repo, template_repo
+from app.repositories import audit_repo, campaign_repo, lead_repo, template_repo
+from app.repositories.audit_repo import AuditEntry
 from app.repositories.campaign_repo import CampaignEntry, ItemEntry
 from app.services.audit_service import AuditService
 
@@ -148,6 +149,11 @@ class CampaignService:
         """Dry-run gates 1-7 for open items without any side effects."""
         campaign = self._require(session, campaign_id)
         return Previewer(self._clock, self._cipher).preview(session, campaign)
+
+    def timeline(self, session: Session, campaign_id: int) -> list[AuditEntry]:
+        """Return the task's CAMPAIGN_* audit events in ascending order."""
+        self._require(session, campaign_id)
+        return audit_repo.list_campaign_events(session, campaign_id)
 
     def list_items(
         self,

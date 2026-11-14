@@ -12,8 +12,9 @@ from sqlalchemy.orm import Session
 
 from app.core.clock import Clock
 from app.domain.masking import redact
-from app.repositories import audit_repo
+from app.repositories import audit_repo, send_log_repo
 from app.repositories.audit_repo import AuditEntry
+from app.repositories.send_log_repo import SendLogEntry
 from app.schemas.common import iso_z
 
 GENESIS_HASH = "GENESIS"
@@ -113,6 +114,34 @@ class AuditService:
             action=action,
             entity_type=entity_type,
             entity_id=entity_id,
+            from_ts=_as_utc(from_ts),
+            to_ts=_as_utc(to_ts),
+            offset=(page - 1) * page_size,
+            limit=page_size,
+        )
+
+    def list_send_logs(
+        self,
+        session: Session,
+        *,
+        task_id: int | None = None,
+        item_id: int | None = None,
+        phase: str | None = None,
+        outcome: str | None = None,
+        reason_code: str | None = None,
+        from_ts: datetime | None = None,
+        to_ts: datetime | None = None,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> tuple[list[SendLogEntry], int]:
+        """Return one page of send log entries matching the filters."""
+        return send_log_repo.list_entries(
+            session,
+            task_id=task_id,
+            item_id=item_id,
+            phase=phase,
+            outcome=outcome,
+            reason_code=reason_code,
             from_ts=_as_utc(from_ts),
             to_ts=_as_utc(to_ts),
             offset=(page - 1) * page_size,

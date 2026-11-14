@@ -136,6 +136,50 @@ def list_for_task(session: Session, task_id: int) -> list[SendLogEntry]:
     return [_to_entry(row) for row in rows]
 
 
+def list_entries(
+    session: Session,
+    *,
+    task_id: int | None = None,
+    item_id: int | None = None,
+    phase: str | None = None,
+    outcome: str | None = None,
+    reason_code: str | None = None,
+    from_ts: datetime | None = None,
+    to_ts: datetime | None = None,
+    offset: int = 0,
+    limit: int = 20,
+) -> tuple[list[SendLogEntry], int]:
+    """Return one page of send log rows matching the filters, newest first."""
+    conditions: list[Any] = []
+    if task_id is not None:
+        conditions.append(SendLog.task_id == task_id)
+    if item_id is not None:
+        conditions.append(SendLog.item_id == item_id)
+    if phase is not None:
+        conditions.append(SendLog.phase == phase)
+    if outcome is not None:
+        conditions.append(SendLog.outcome == outcome)
+    if reason_code is not None:
+        conditions.append(SendLog.reason_code == reason_code)
+    if from_ts is not None:
+        conditions.append(SendLog.created_at >= from_ts)
+    if to_ts is not None:
+        conditions.append(SendLog.created_at <= to_ts)
+
+    total_statement = select(func.count()).select_from(SendLog)
+    page_statement = select(SendLog)
+    if conditions:
+        total_statement = total_statement.where(*conditions)
+        page_statement = page_statement.where(*conditions)
+    total = session.scalar(total_statement) or 0
+    rows = session.scalars(
+        page_statement.order_by(SendLog.created_at.desc(), SendLog.id.desc())
+        .offset(offset)
+        .limit(limit)
+    ).all()
+    return [_to_entry(row) for row in rows], total
+
+
 def _to_entry(row: SendLog) -> SendLogEntry:
     return SendLogEntry(
         id=row.id,
