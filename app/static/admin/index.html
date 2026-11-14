@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beauty Outreach 管理台</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <h1>Beauty Outreach 管理台</h1>
+  <div class="auth">
+    <label>Admin Token <input id="token-input" type="password" autocomplete="off"></label>
+    <label>操作人 <input id="operator-input" type="text" value="admin" size="10"></label>
+    <button id="save-auth" type="button">保存</button>
+    <span id="auth-state" class="muted"></span>
+  </div>
+</header>
+
+<div id="error-bar" class="error-bar hidden" role="alert">
+  <span id="error-text"></span>
+  <button id="error-close" type="button" aria-label="关闭">×</button>
+</div>
+
+<nav id="tabs">
+  <button type="button" data-page="overview">概览</button>
+  <button type="button" data-page="leads">线索</button>
+  <button type="button" data-page="tasks">任务</button>
+  <button type="button" data-page="compliance">合规</button>
+  <button type="button" data-page="config">配置</button>
+  <button type="button" data-page="logs">日志</button>
+</nav>
+
+<main>
+  <section id="page-overview" class="page">
+    <div class="row"><h2>概览</h2><button id="overview-refresh" type="button">刷新</button></div>
+    <div id="overview-cards" class="cards"></div>
+    <div id="overview-detail" class="panel"></div>
+  </section>
+
+  <section id="page-leads" class="page hidden">
+    <h2>线索</h2>
+    <div class="panel">
+      <div class="row">
+        <button id="import-mock" type="button">导入 Mock 数据</button>
+        <input id="import-file" type="file" accept=".csv,.json">
+        <button id="import-file-btn" type="button">上传并导入</button>
+        <button id="run-screening" type="button">运行筛选</button>
+      </div>
+      <div id="import-report"></div>
+    </div>
+    <div class="panel">
+      <div class="row">
+        <label>状态
+          <select id="lead-status">
+            <option value="">全部</option>
+            <option>NEW</option>
+            <option>PENDING_REVIEW</option>
+            <option>APPROVED</option>
+            <option>REJECTED</option>
+            <option>DISCARDED</option>
+          </select>
+        </label>
+        <label>最低分 <input id="lead-min-score" type="number" min="0" max="100" size="4"></label>
+        <label>搜索 <input id="lead-q" type="text" placeholder="用户名 / 显示名"></label>
+        <button id="lead-search" type="button">查询</button>
+        <label>批量备注 <input id="bulk-note" type="text" placeholder="可选"></label>
+        <button id="bulk-approve" type="button">批量通过</button>
+        <button id="bulk-reject" type="button">批量拒绝</button>
+      </div>
+      <div id="lead-results"></div>
+      <div class="row">
+        <button id="lead-prev" type="button">上一页</button>
+        <span id="lead-page-info" class="muted"></span>
+        <button id="lead-next" type="button">下一页</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="page-tasks" class="page hidden">
+    <div id="task-list-view">
+      <h2>任务</h2>
+      <div class="panel">
+        <h3>新建任务</h3>
+        <div class="row">
+          <label>名称 <input id="task-name" type="text" placeholder="首轮问候"></label>
+          <label>模板 <select id="task-template"></select></label>
+          <label>最低分 <input id="task-min-score" type="number" min="0" max="100" size="4"></label>
+          <button id="task-create" type="button">创建并干跑预览</button>
+        </div>
+        <div id="task-preview"></div>
+      </div>
+      <div class="panel">
+        <div class="row"><h3>任务列表</h3><button id="task-refresh" type="button">刷新</button></div>
+        <div id="task-table"></div>
+      </div>
+    </div>
+    <div id="task-detail-view" class="hidden">
+      <div class="row">
+        <button id="task-back" type="button">← 返回列表</button>
+        <button id="task-detail-refresh" type="button">刷新</button>
+        <span id="task-poll-note" class="muted"></span>
+      </div>
+      <div id="task-detail"></div>
+      <div id="task-items" class="panel"></div>
+    </div>
+  </section>
+
+  <section id="page-compliance" class="page hidden">
+    <h2>合规</h2>
+    <div class="panel">
+      <h3>授权（consent）</h3>
+      <div id="consent-table"></div>
+      <div class="row"><button id="consent-refresh" type="button">刷新</button></div>
+    </div>
+    <div class="panel">
+      <h3>黑名单 / 退订</h3>
+      <div class="row">
+        <label>号码 <input id="suppress-phone" type="tel" placeholder="+1..."></label>
+        <label>原因 <input id="suppress-reason" type="text"></label>
+        <button id="suppress-add" type="button">加入黑名单</button>
+      </div>
+      <div id="suppression-table"></div>
+    </div>
+    <div id="demo-panel" class="panel hidden">
+      <h3>演示（DEMO_MODE）</h3>
+      <div class="row">
+        <label>号码 <input id="demo-phone" type="tel" placeholder="+1..."></label>
+        <button id="demo-stop" type="button">模拟收到 STOP</button>
+        <button id="demo-flush" type="button">立即产出回执</button>
+        <button id="demo-reset" type="button" class="danger">重置演示数据</button>
+      </div>
+      <div id="demo-result" class="muted"></div>
+    </div>
+  </section>
+
+  <section id="page-config" class="page hidden">
+    <h2>配置</h2>
+    <div id="config-error" class="inline-error"></div>
+    <div class="panel">
+      <h3>关键词</h3>
+      <div class="row">
+        <input id="kw-term" type="text" placeholder="term">
+        <select id="kw-kind"><option>POSITIVE</option><option>NEGATIVE</option></select>
+        <input id="kw-weight" type="number" value="5" size="4">
+        <button id="kw-add" type="button">新增</button>
+      </div>
+      <div id="keyword-table"></div>
+    </div>
+    <div class="panel">
+      <h3>频控规则</h3>
+      <div class="row">
+        <input id="rr-name" type="text" placeholder="name">
+        <select id="rr-scope"><option>GLOBAL</option><option>PER_RECIPIENT</option></select>
+        <label>窗口(s) <input id="rr-window" type="number" value="10" size="5"></label>
+        <label>上限 <input id="rr-max" type="number" value="5" size="4"></label>
+        <button id="rr-add" type="button">新增</button>
+      </div>
+      <div id="rate-table"></div>
+    </div>
+    <div class="panel">
+      <h3>模板</h3>
+      <div class="row">
+        <input id="tpl-name" type="text" placeholder="name">
+        <input id="tpl-language" type="text" value="en" size="5">
+        <textarea id="tpl-body" rows="2" placeholder="Hi {{username}}, ..."></textarea>
+        <button id="tpl-create" type="button">新建模板</button>
+      </div>
+      <div id="template-table"></div>
+      <div id="template-preview" class="muted"></div>
+    </div>
+    <div class="panel">
+      <h3>设置</h3>
+      <div id="settings-form"></div>
+      <button id="settings-save" type="button">保存设置</button>
+    </div>
+  </section>
+
+  <section id="page-logs" class="page hidden">
+    <h2>日志</h2>
+    <div class="row">
+      <button id="logs-audit-btn" type="button">审计日志</button>
+      <button id="logs-send-btn" type="button">发送日志</button>
+    </div>
+    <div id="logs-audit" class="panel">
+      <div class="row">
+        <input id="audit-actor" type="text" placeholder="actor">
+        <input id="audit-action" type="text" placeholder="action">
+        <input id="audit-entity-type" type="text" placeholder="entity_type">
+        <input id="audit-entity-id" type="text" placeholder="entity_id">
+        <button id="audit-search" type="button">查询</button>
+      </div>
+      <div id="audit-table"></div>
+      <div class="row">
+        <button id="audit-prev" type="button">上一页</button>
+        <span id="audit-page-info" class="muted"></span>
+        <button id="audit-next" type="button">下一页</button>
+      </div>
+    </div>
+    <div id="logs-send" class="panel hidden">
+      <div class="row">
+        <input id="send-task" type="number" placeholder="task_id" size="6">
+        <input id="send-item" type="number" placeholder="item_id" size="6">
+        <select id="send-phase">
+          <option value="">phase</option>
+          <option>GATE</option>
+          <option>PROVIDER</option>
+          <option>RECEIPT</option>
+        </select>
+        <select id="send-outcome">
+          <option value="">outcome</option>
+          <option>BLOCKED</option>
+          <option>DEFERRED</option>
+          <option>ACCEPTED</option>
+          <option>RETRYABLE_ERROR</option>
+          <option>PERMANENT_ERROR</option>
+          <option>DELIVERED</option>
+          <option>READ</option>
+          <option>DELIVERY_FAILED</option>
+        </select>
+        <input id="send-reason" type="text" placeholder="reason_code">
+        <button id="send-search" type="button">查询</button>
+      </div>
+      <div id="send-table"></div>
+      <div class="row">
+        <button id="send-prev" type="button">上一页</button>
+        <span id="send-page-info" class="muted"></span>
+        <button id="send-next" type="button">下一页</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>

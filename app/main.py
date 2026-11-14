@@ -5,8 +5,10 @@ from __future__ import annotations
 import threading
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from app import APP_VERSION
 from app.api.audit import router as audit_router
@@ -37,6 +39,8 @@ from app.providers.messenger import MockMessenger
 from app.services.audit_service import AuditService
 from app.services.receipt_service import ReceiptService
 from app.services.seed_service import database_is_empty, seed_defaults
+
+ADMIN_STATIC_DIR = Path(__file__).resolve().parent / "static" / "admin"
 
 
 @asynccontextmanager
@@ -128,6 +132,11 @@ def create_app(
     app.include_router(webhook_router)
     if settings.demo_mode:
         app.include_router(demo_router)
+    app.mount(
+        "/admin",
+        StaticFiles(directory=str(ADMIN_STATIC_DIR), html=True),
+        name="admin",
+    )
     return app
 
 
