@@ -1,0 +1,513 @@
+[
+  {
+    "username": "glow.with.mia",
+    "display_name": "Mia",
+    "bio": "Reviewing beauty devices, LED masks & microcurrent tools | skincare nerd",
+    "region": "US",
+    "language": "en",
+    "source_url": "https://www.instagram.com/glow.with.mia/",
+    "phone": "+15555550101",
+    "consent_status": "GRANTED",
+    "consent_source": "web_form",
+    "consent_evidence": "form-2026-0001",
+    "expected_label": "relevant"
+  },
+  {
+    "username": "glow.aura",
+    "display_name": "Ava",
+    "bio": "LED mask & radio frequency routines | honest skincare reviews",
+    "region": "GB",
+    "language": "en",
+    "source_url": "https://www.instagram.com/glow.aura/",
+    "phone": "+15555550102",
+    "consent_status": "GRANTED",
+    "consent_source": "web_form",
+    "consent_evidence": "form-2026-0002",
+    "expected_label": "relevant"
+  },
+  {
+    "username": "glow.lina",
+    "display_name": "Lina",
+    "bio": "Microcurrent facial tools and skincare device reviews",
+    "region": "CA",
+    "language": "en",
+    "source_url": "https://www.instagram.com/glow.lina/",
+    "phone": "+15555550103",
+    "consent_status": "GRANTED",
+    "consent_source": "web_form",
+    "consent_evidence": "form-2026-0003",
+    "expected_label": "relevant"
+  },
+  {
+    "username": "glow.radio",
+    "display_name": "RadioRae",
+    "bio": "Radio frequency & red light therapy at home | face massager tips",
+    "region": "AU",
+    "language": "en",
+    "source_url": "https://www.instagram.com/glow.radio/",
+    "phone": "+15555559001",
+    "consent_status": "GRANTED",
+    "consent_source": "web_form",
+    "consent_evidence": "form-2026-0004",
+    "expected_label": "relevant"
+  },
+  {
+    "username": "glow.led",
+    "display_name": "LedLena",
+    "bio": "Beauty device enthusiast | LED mask daily user",
+    "region": "US",
+    "language": "en",
+    "source_url": "https://www.instagram.com/glow.led/",
+    "phone": "+15555559002",
+    "consent_status": "GRANTED",
+    "consent_source": "web_form",
+    "consent_evidence": "form-2026-0005",
+    "expected_label": "relevant"
+  },
+  {
+    "username": "glow.yi",
+    "display_name": "小仪",
+    "bio": "美容仪与导入仪测评，每周更新",
+    "region": "SG",
+    "language": "zh",
+    "source_url": "https://www.instagram.com/glow.yi/",
+    "phone": "+15555559003",
+    "consent_status": "GRANTED",
+    "consent_source": "crm_import",
+    "consent_evidence": "crm-0006",
+    "expected_label": "relevant"
+  },
+  {
+    "username": "glow.micro",
+    "display_name": "MicroMia",
+    "bio": "Skincare device and microcurrent lover",
+    "region": "MY",
+    "language": "en",
+    "source_url": "https://www.instagram.com/glow.micro/",
+    "phone": "+15555559004",
+    "consent_status": "GRANTED",
+    "consent_source": "web_form",
+    "consent_evidence": "form-2026-0007",
+    "expected_label": "relevant"
+  },
+  {
+    "username": "glow.glow",
+    "display_name": "GlowGwen",
+    "bio": "LED mask & face massager reviews | skincare tips",
+    "region": "HK",
+    "language": "en",
+    "source_url": "https://www.instagram.com/glow.glow/",
+    "phone": "+15555559005",
+    "consent_status": "GRANTED",
+    "consent_source": "web_form",
+    "consent_evidence": "form-2026-0008",
+    "expected_label": "relevant"
+  },
+  {
+    "username": "glow.noconsent",
+    "display_name": "Nora",
+    "bio": "Beauty device collector | radio frequency fan | 抗衰 tips",
+    "region": "TW",
+    "language": "en",
+    "source_url": "https://www.instagram.com/glow.noconsent/",
+    "phone": "+15555550109",
+    "expected_label": "relevant"
+  },
+  {
+    "username": "glow.revoked",
+    "display_name": "Rita",
+    "bio": "Microcurrent & red light therapy journal | skincare notes",
+    "region": "US",
+    "language": "en",
+    "source_url": "https://www.instagram.com/glow.revoked/",
+    "phone": "+15555550110",
+    "consent_status": "REVOKED",
+    "consent_source": "crm_import",
+    "consent_evidence": "ticket-5510",
+    "expected_label": "relevant"
+  },
+  {
+    "username": "glow.rf",
+    "display_name": "阿蓉",
+    "bio": "射频美容仪抗衰记录，家用护理心得",
+    "region": "HK",
+    "language": "zh",
+    "source_url": "https://www.instagram.com/glow.rf/",
+    "phone": "+15555550111",
+    "consent_status": "GRANTED",
+    "consent_source": "web_form",
+    "consent_evidence": "form-2026-0011",
+    "expected_label": "relevant"
+  },
+  {
+    "username": "glow.face",
+    "display_name": "Fiona",
+    "bio": "Face massager and skincare device reviews | 护肤 tips",
+    "region": "SG",
+    "language": "zh",
+    "source_url": "https://www.instagram.com/glow.face/",
+    "phone": "+15555550112",
+    "consent_status": "GRANTED",
+    "consent_source": "web_form",
+    "consent_evidence": "form-2026-0012",
+    "expected_label": "relevant"
+  },
+  {
+    "username": "glow.routine",
+    "display_name": "小茹",
+    "bio": "射频美容仪与护肤 routine",
+    "region": "TW",
+    "language": "zh",
+    "source_url": "https://www.instagram.com/glow.routine/",
+    "phone": "+15555550113",
+    "consent_status": "GRANTED",
+    "consent_source": "web_form",
+    "consent_evidence": "form-2026-0013",
+    "expected_label": "relevant"
+  },
+  {
+    "username": "glow.device",
+    "display_name": "Dana",
+    "bio": "Beauty device + LED mask routines",
+    "region": "US",
+    "language": "en",
+    "source_url": "https://www.instagram.com/glow.device/",
+    "expected_label": "relevant"
+  },
+  {
+    "username": "glow.skin",
+    "display_name": "Skyler",
+    "bio": "Skincare device & microcurrent tools",
+    "region": "GB",
+    "language": "en",
+    "source_url": "https://www.instagram.com/glow.skin/",
+    "expected_label": "relevant"
+  },
+  {
+    "username": "glow.light",
+    "display_name": "Luca",
+    "bio": "Radio frequency, red light therapy, face massager",
+    "region": "CA",
+    "language": "en",
+    "source_url": "https://www.instagram.com/glow.light/",
+    "expected_label": "relevant"
+  },
+  {
+    "username": "glow.zh",
+    "display_name": "小珠",
+    "bio": "导入仪 / 美容仪 测评",
+    "region": "TW",
+    "language": "zh",
+    "source_url": "https://www.instagram.com/glow.zh/",
+    "expected_label": "relevant"
+  },
+  {
+    "username": "glow.mask",
+    "display_name": "Maya",
+    "bio": "LED mask lover | skincare device collector",
+    "region": "AU",
+    "language": "en",
+    "source_url": "https://www.instagram.com/glow.mask/",
+    "expected_label": "relevant"
+  },
+  {
+    "username": "glow.warm",
+    "display_name": "暖姐",
+    "bio": "Microcurrent & 射频 home care | 抗衰",
+    "region": "SG",
+    "language": "zh",
+    "source_url": "https://www.instagram.com/glow.warm/",
+    "expected_label": "relevant"
+  },
+  {
+    "username": "glow.broken",
+    "display_name": "Bella",
+    "bio": "Beauty device reviewer | LED mask enthusiast",
+    "region": "US",
+    "language": "en",
+    "source_url": "https://www.instagram.com/glow.broken/",
+    "phone": "555-0101",
+    "expected_label": "relevant"
+  },
+  {
+    "username": "glow.skincare",
+    "display_name": "Skincare Sue",
+    "bio": "Skincare lover | beauty blogger | tips & routines",
+    "region": "US",
+    "language": "en",
+    "source_url": "https://www.instagram.com/glow.skincare/",
+    "expected_label": "borderline"
+  },
+  {
+    "username": "glow.beauty",
+    "display_name": "Beauty Bee",
+    "bio": "Beauty tips and skincare routines for beginners",
+    "region": "GB",
+    "language": "en",
+    "source_url": "https://www.instagram.com/glow.beauty/",
+    "expected_label": "borderline"
+  },
+  {
+    "username": "glow.care",
+    "display_name": "小美",
+    "bio": "护肤 / 抗衰 / 美妆 分享",
+    "region": "MY",
+    "language": "zh",
+    "source_url": "https://www.instagram.com/glow.care/",
+    "expected_label": "borderline"
+  },
+  {
+    "username": "glow.aging",
+    "display_name": "Anna",
+    "bio": "Anti-aging skincare journal",
+    "region": "CA",
+    "language": "en",
+    "source_url": "https://www.instagram.com/glow.aging/",
+    "expected_label": "borderline"
+  },
+  {
+    "username": "glow.tester",
+    "display_name": "Tessa",
+    "bio": "Beauty and skincare product tester",
+    "region": "AU",
+    "language": "en",
+    "source_url": "https://www.instagram.com/glow.tester/",
+    "expected_label": "borderline"
+  },
+  {
+    "username": "glow.mz",
+    "display_name": "美妆日常",
+    "bio": "美妆与抗衰护肤日常分享",
+    "region": "SG",
+    "language": "zh",
+    "source_url": "https://www.instagram.com/glow.mz/",
+    "expected_label": "borderline"
+  },
+  {
+    "username": "glow.haul",
+    "display_name": "Hailey",
+    "bio": "Skincare routines & beauty hauls",
+    "region": "US",
+    "language": "en",
+    "source_url": "https://www.instagram.com/glow.haul/",
+    "expected_label": "borderline"
+  },
+  {
+    "username": "glow.note",
+    "display_name": "小笔记",
+    "bio": "护肤笔记｜抗衰与美妆",
+    "region": "TW",
+    "language": "zh",
+    "source_url": "https://www.instagram.com/glow.note/",
+    "expected_label": "borderline"
+  },
+  {
+    "username": "fit.marco",
+    "display_name": "Marco",
+    "bio": "Marathon runner | fitness coach",
+    "region": "US",
+    "language": "en",
+    "source_url": "https://www.instagram.com/fit.marco/",
+    "expected_label": "irrelevant"
+  },
+  {
+    "username": "cook.lena",
+    "display_name": "Lena",
+    "bio": "Home cooking & restaurant reviews",
+    "region": "GB",
+    "language": "en",
+    "source_url": "https://www.instagram.com/cook.lena/",
+    "expected_label": "irrelevant"
+  },
+  {
+    "username": "roam.tom",
+    "display_name": "Tom",
+    "bio": "Travel photographer exploring Asia",
+    "region": "SG",
+    "language": "en",
+    "source_url": "https://www.instagram.com/roam.tom/",
+    "expected_label": "irrelevant"
+  },
+  {
+    "username": "gadget.raj",
+    "display_name": "Raj",
+    "bio": "Tech reviewer | gadgets & cameras",
+    "region": "CA",
+    "language": "en",
+    "source_url": "https://www.instagram.com/gadget.raj/",
+    "expected_label": "irrelevant"
+  },
+  {
+    "username": "indie.sam",
+    "display_name": "Sam",
+    "bio": "Indie musician & producer",
+    "region": "AU",
+    "language": "en",
+    "source_url": "https://www.instagram.com/indie.sam/",
+    "expected_label": "irrelevant"
+  },
+  {
+    "username": "dog.mom",
+    "display_name": "Momo",
+    "bio": "Dog mom | pet photography",
+    "region": "US",
+    "language": "en",
+    "source_url": "https://www.instagram.com/dog.mom/",
+    "expected_label": "irrelevant"
+  },
+  {
+    "username": "book.ana",
+    "display_name": "Ana",
+    "bio": "Book lover & coffee addict",
+    "region": "GB",
+    "language": "en",
+    "source_url": "https://www.instagram.com/book.ana/",
+    "expected_label": "irrelevant"
+  },
+  {
+    "username": "plant.lee",
+    "display_name": "Lee",
+    "bio": "Urban gardener & plant parent",
+    "region": "MY",
+    "language": "en",
+    "source_url": "https://www.instagram.com/plant.lee/",
+    "expected_label": "irrelevant"
+  },
+  {
+    "username": "game.zed",
+    "display_name": "Zed",
+    "bio": "Gaming streamer & esports fan",
+    "region": "TW",
+    "language": "en",
+    "source_url": "https://www.instagram.com/game.zed/",
+    "expected_label": "irrelevant"
+  },
+  {
+    "username": "design.ivy",
+    "display_name": "Ivy",
+    "bio": "Interior design & architecture",
+    "region": "HK",
+    "language": "en",
+    "source_url": "https://www.instagram.com/design.ivy/",
+    "expected_label": "irrelevant"
+  },
+  {
+    "username": "wholesale.dev",
+    "display_name": "Wholesale Dev",
+    "bio": "Wholesale beauty device supplier — DM for dropship",
+    "source_url": "https://www.instagram.com/wholesale.dev/",
+    "expected_label": "irrelevant"
+  },
+  {
+    "username": "b2b.king",
+    "display_name": "批发王",
+    "bio": "Beauty device 批发 代购",
+    "region": "MY",
+    "language": "zh",
+    "source_url": "https://www.instagram.com/b2b.king/",
+    "expected_label": "irrelevant"
+  },
+  {
+    "username": "mask.resell",
+    "display_name": "Resell Rita",
+    "bio": "LED mask reseller | giveaway host",
+    "region": "US",
+    "language": "en",
+    "source_url": "https://www.instagram.com/mask.resell/",
+    "expected_label": "irrelevant"
+  },
+  {
+    "username": "agent.wang",
+    "display_name": "代理王",
+    "bio": "美容仪 招代理",
+    "region": "TW",
+    "language": "zh",
+    "source_url": "https://www.instagram.com/agent.wang/",
+    "expected_label": "irrelevant"
+  },
+  {
+    "username": "skin.bulk",
+    "display_name": "Bulk Kim",
+    "bio": "skincare device 批发 wholesale",
+    "region": "HK",
+    "language": "zh",
+    "source_url": "https://www.instagram.com/skin.bulk/",
+    "expected_label": "irrelevant"
+  },
+  {
+    "username": "f4f.star",
+    "display_name": "Star",
+    "bio": "face massager follow4follow f4f",
+    "region": "SG",
+    "language": "en",
+    "source_url": "https://www.instagram.com/f4f.star/",
+    "expected_label": "irrelevant"
+  },
+  {
+    "username": "GLOW.AURA",
+    "display_name": "Ava Clone",
+    "bio": "LED mask routines",
+    "region": "GB",
+    "language": "en",
+    "source_url": "https://www.instagram.com/GLOW.AURA/",
+    "expected_label": "relevant"
+  },
+  {
+    "username": "@glow.with.mia",
+    "display_name": "Mia Clone",
+    "bio": "beauty device fan",
+    "region": "US",
+    "language": "en",
+    "expected_label": "relevant"
+  },
+  {
+    "username": "glow.dup.phone",
+    "display_name": "Dupe Phone",
+    "bio": "microcurrent lover",
+    "region": "CA",
+    "language": "en",
+    "source_url": "https://www.instagram.com/glow.dup.phone/",
+    "phone": "+15555550103",
+    "expected_label": "relevant"
+  },
+  {
+    "username": "glow.radio",
+    "display_name": "Radio Clone",
+    "bio": "red light therapy notes",
+    "region": "AU",
+    "language": "en",
+    "source_url": "https://www.instagram.com/glow.radio/",
+    "phone": "+15555550199",
+    "expected_label": "relevant"
+  },
+  {
+    "display_name": "Ghost",
+    "bio": "no username",
+    "expected_label": "irrelevant"
+  },
+  {
+    "username": "bad name!",
+    "display_name": "Bad Name",
+    "bio": "invalid username",
+    "source_url": "https://www.instagram.com/bad name!/",
+    "expected_label": "irrelevant"
+  },
+  {
+    "username": "url.outside",
+    "display_name": "Outside",
+    "bio": "source url elsewhere",
+    "region": "US",
+    "language": "en",
+    "source_url": "https://example.com/lead/url.outside",
+    "expected_label": "irrelevant"
+  },
+  {
+    "username": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "display_name": "Long Name",
+    "bio": "too long username",
+    "region": "US",
+    "language": "en",
+    "source_url": "https://www.instagram.com/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/",
+    "expected_label": "irrelevant"
+  }
+]

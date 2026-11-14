@@ -11,12 +11,14 @@ from app import APP_VERSION
 from app.api.audit import router as audit_router
 from app.api.config import router as config_router
 from app.api.errors import register_exception_handlers
+from app.api.lead import router as lead_router
 from app.api.middleware import AdminAuthMiddleware, RequestContextMiddleware
 from app.api.system import router as system_router
 from app.core.clock import Clock, SystemClock
 from app.core.config import Settings, load_settings, validate_runtime_settings
 from app.core.db import build_engine, build_session_factory
 from app.core.logging import configure_logging
+from app.core.security import PhoneCipher
 from app.domain.masking import redact_log_text
 from app.models import create_schema
 from app.services.seed_service import database_is_empty, seed_defaults
@@ -51,6 +53,9 @@ def create_app(
     app.state.settings = settings
     app.state.clock = clock or SystemClock()
     app.state.messenger = messenger
+    app.state.phone_cipher = PhoneCipher(
+        settings.phone_enc_key, settings.phone_hash_key
+    )
     app.state.engine = engine
     app.state.session_factory = build_session_factory(engine)
     app.state.worker_status = "disabled"
@@ -61,6 +66,7 @@ def create_app(
     app.include_router(system_router)
     app.include_router(audit_router)
     app.include_router(config_router)
+    app.include_router(lead_router)
     return app
 
 

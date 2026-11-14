@@ -1,0 +1,7 @@
+username,display_name,bio,region,language,source_url,phone,consent_status,consent_source,consent_evidence
+sample.one,Sample One,Beauty device and LED mask reviews,US,en,https://www.instagram.com/sample.one/,+15555550201,GRANTED,web_form,form-2026-0201
+sample.two,Sample Two,Skincare device enthusiast,GB,en,https://www.instagram.com/sample.two/,+15555550202,GRANTED,web_form,form-2026-0202
+sample.three,样例三,射频美容仪测评,CN,zh-CN,https://www.instagram.com/sample.three/,,
+sample.four,Sample Four,Microcurrent and red light therapy,CA,en,https://www.instagram.com/sample.four/,+15555550204,REVOKED,crm_import,
+sample.five,Sample Five,Skincare lover and beauty blogger,US,en,https://www.instagram.com/sample.five/,,
+sample.six,Sample Six,Travel and food,AU,en,https://www.instagram.com/sample.six/,,

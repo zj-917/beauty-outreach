@@ -1,0 +1,4 @@
+type,phone,username,reason
+BLACKLIST,+15555550111,,inbound complaint 2026-10
+UNSUBSCRIBE,+15555550112,,customer opt-out
+BLACKLIST,,glow.routine,seller account
