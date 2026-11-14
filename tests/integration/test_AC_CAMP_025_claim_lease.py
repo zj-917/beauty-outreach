@@ -27,7 +27,11 @@ def _make_worker(
     app: FastAPI, clock: FakeClock, messenger: MockMessenger, worker_id: str
 ) -> Worker:
     processor = Processor(
-        clock, app.state.phone_cipher, messenger, worker_id=worker_id
+        clock,
+        app.state.phone_cipher,
+        messenger,
+        worker_id=worker_id,
+        audit=app.state.audit_service,
     )
     return Worker(app.state.session_factory, clock, processor, worker_id=worker_id)
 

@@ -36,10 +36,17 @@ class Worker:
         self._stop = threading.Event()
 
     def tick(self) -> int:
-        """Claim each running task's share and process every claimed item."""
+        """Recover leases, claim each running task's share and process every item."""
         processed = 0
         with self._session_factory() as session:
+            settings: dict[str, Any] = load_runtime_settings(session)
+            campaign_repo.recover_expired_leases(
+                session,
+                now=self._clock.now(),
+                lease_seconds=int(settings["sending.lease_seconds"]),
+            )
             task_ids = campaign_repo.list_running_task_ids(session)
+            session.commit()
         for task_id in task_ids:
             for item_id in self.claim(task_id):
                 with self._session_factory() as session:
@@ -52,6 +59,14 @@ class Worker:
                         )
                         continue
                     processed += 1
+            with self._session_factory() as session:
+                try:
+                    self._processor.complete_if_finished(session, task_id)
+                except Exception:
+                    session.rollback()
+                    logger.exception(
+                        "worker completion check failed task_id=%s", task_id
+                    )
         return processed
 
     def claim(self, task_id: int) -> list[int]:

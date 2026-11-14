@@ -53,7 +53,7 @@ def test_AC_CAMP_005_repeated_start_never_duplicates_messages(
     assert messenger.unique_messages == 3
     assert messenger.calls == 3
 
-    assert client.post(f"/api/v1/campaigns/{campaign_id}/start").status_code == 200
+    assert client.post(f"/api/v1/campaigns/{campaign_id}/start").status_code == 409
     worker.tick()
     assert messenger.unique_messages == 3
     assert messenger.calls == 3

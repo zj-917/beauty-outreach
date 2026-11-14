@@ -88,6 +88,7 @@ def create_app(
             app.state.phone_cipher,
             messenger,
             worker_id="worker-1",
+            audit=app.state.audit_service,
         )
         worker = Worker(
             app.state.session_factory,

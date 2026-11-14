@@ -219,6 +219,25 @@ def skip_open_items(
     return int(result.rowcount or 0)
 
 
+def recover_expired_leases(
+    session: Session, *, now: datetime, lease_seconds: int
+) -> int:
+    """Return expired SENDING items to RETRY_WAIT and report how many changed."""
+    stale = now - timedelta(seconds=lease_seconds)
+    result = session.execute(
+        update(TaskItem)
+        .where(TaskItem.status == "SENDING", TaskItem.locked_at < stale)
+        .values(
+            status="RETRY_WAIT",
+            next_attempt_at=now,
+            locked_by=None,
+            locked_at=None,
+            updated_at=now,
+        )
+    )
+    return int(result.rowcount or 0)
+
+
 def list_running_task_ids(session: Session) -> list[int]:
     """Return ids of every RUNNING campaign."""
     return list(

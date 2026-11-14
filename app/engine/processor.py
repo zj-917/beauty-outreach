@@ -3,13 +3,19 @@
 from __future__ import annotations
 
 import logging
+import random
+import threading
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from sqlalchemy.orm import Session
 
+from app.core.audit import AuditWriter
 from app.core.clock import Clock
 from app.core.security import PhoneCipher
+from app.domain.backoff import BackoffPolicy, retry_delay
+from app.domain.failures import AUTH_ERROR_CODE, RATE_LIMITED_CODE, breaks_circuit
 from app.domain.gates import (
     ComplianceSnapshot,
     Defer,
@@ -50,7 +56,7 @@ def _iso_z(value: datetime) -> str:
 
 
 class Processor:
-    """Execute gates 1-9 and the provider call for a single leased item."""
+    """Execute gates 1-9, the provider call and the retry policy for one item."""
 
     def __init__(
         self,
@@ -59,11 +65,19 @@ class Processor:
         messenger: Messenger,
         *,
         worker_id: str,
+        audit: AuditWriter,
+        rng: Callable[[], float] | None = None,
     ) -> None:
         self._clock = clock
         self._cipher = cipher
         self._messenger = messenger
         self._worker_id = worker_id
+        self._audit = audit
+        self._rng = rng or self._default_rng
+
+    @staticmethod
+    def _default_rng() -> float:
+        return random.uniform(-1.0, 1.0)
 
     def process(self, session: Session, item_id: int) -> str:
         """Run one item and return the outcome label."""
@@ -106,6 +120,13 @@ class Processor:
             return self._defer(session, item, decision, now)
         assert isinstance(decision, Pass)
         return self._send(session, item, lead, template, settings, rendered, now)
+
+    def complete_if_finished(self, session: Session, task_id: int) -> bool:
+        """Complete a RUNNING task with no open items; commits when it applies."""
+        completed = self._maybe_complete(session, task_id, self._clock.now())
+        if completed:
+            session.commit()
+        return completed
 
     def _context(
         self,
@@ -258,6 +279,7 @@ class Processor:
             reason_code=reason,
             created_at=now,
         )
+        self._maybe_complete(session, item.task_id, now)
         session.commit()
         return "SKIPPED"
 
@@ -321,20 +343,49 @@ class Processor:
             template_name=template.name,
             language=template.language,
         )
+        timeout_seconds = float(settings["sending.provider_timeout_seconds"])
         started = self._clock.monotonic()
-        try:
-            result = self._messenger.send(request)
-        except Exception:
-            logger.warning("provider raised unexpectedly item_id=%s", item.id)
-            result = SendResult(
-                kind=ResultKind.RETRYABLE,
-                code="NETWORK_ERROR",
-                message="provider raised unexpectedly",
-            )
+        result = self._call_provider(request, timeout_seconds)
         latency_ms = max(0, int((self._clock.monotonic() - started) * 1000))
         return self._write_back(
             session, item, result, attempt_no, latency_ms, settings
         )
+
+    def _call_provider(self, request: SendRequest, timeout_seconds: float) -> SendResult:
+        """Call the provider on a daemon thread so runaway calls cannot block a tick."""
+        box: list[SendResult] = []
+        failures: list[Exception] = []
+
+        def run() -> None:
+            try:
+                box.append(self._messenger.send(request))
+            except Exception as exc:
+                failures.append(exc)
+
+        thread = threading.Thread(target=run, name="provider-call", daemon=True)
+        thread.start()
+        thread.join(timeout_seconds)
+        if thread.is_alive():
+            logger.warning(
+                "provider call timed out key_prefix=%s",
+                request.idempotency_key[:8],
+            )
+            return SendResult(
+                kind=ResultKind.RETRYABLE,
+                code="TIMEOUT",
+                message="provider call timed out",
+            )
+        if failures or not box:
+            logger.warning(
+                "provider raised unexpectedly key_prefix=%s",
+                request.idempotency_key[:8],
+            )
+            return SendResult(
+                kind=ResultKind.RETRYABLE,
+                code="NETWORK_ERROR",
+                message="provider raised unexpectedly",
+            )
+        return box[0]
 
     def _write_back(
         self,
@@ -346,8 +397,11 @@ class Processor:
         settings: dict[str, Any],
     ) -> str:
         finished = self._clock.now()
+        task = campaign_repo.get_campaign(session, item.task_id)
         message = redact_text(result.message) if result.message else None
         common = {"locked_by": None, "locked_at": None, "updated_at": finished}
+        policy = BackoffPolicy.from_settings(settings)
+        code = result.code
         if result.kind is ResultKind.ACCEPTED:
             campaign_repo.update_item(
                 session,
@@ -355,34 +409,66 @@ class Processor:
                 status="SENT",
                 provider_message_id=result.provider_message_id,
                 sent_at=finished,
+                next_attempt_at=None,
                 last_error_code=None,
                 last_error_message=None,
                 **common,
             )
+            if task is not None and task.consecutive_failures:
+                campaign_repo.update_campaign(
+                    session, task.id, consecutive_failures=0, updated_at=finished
+                )
             outcome, reason = "ACCEPTED", None
         elif result.kind is ResultKind.RETRYABLE:
-            delay = float(settings["sending.backoff_base_seconds"])
-            campaign_repo.update_item(
-                session,
-                item.id,
-                status="RETRY_WAIT",
-                next_attempt_at=finished + timedelta(seconds=delay),
-                last_error_code=result.code,
-                last_error_message=message,
-                **common,
+            self._register_failure(
+                session, task, code=code, settings=settings, now=finished
             )
-            outcome, reason = "RETRYABLE_ERROR", result.code
+            if task is not None and task.status == "CANCELLED":
+                campaign_repo.update_item(
+                    session,
+                    item.id,
+                    status="SKIPPED",
+                    reason_code="TASK_CANCELLED",
+                    **common,
+                )
+            elif attempt_no >= policy.max_attempts:
+                campaign_repo.update_item(
+                    session,
+                    item.id,
+                    status="FAILED",
+                    reason_code="MAX_ATTEMPTS_EXCEEDED",
+                    last_error_code=code,
+                    last_error_message=message,
+                    **common,
+                )
+            else:
+                delay = retry_delay(policy, attempt=attempt_no, u=self._rng())
+                if code == RATE_LIMITED_CODE and result.retry_after_seconds is not None:
+                    delay = max(delay, float(result.retry_after_seconds))
+                campaign_repo.update_item(
+                    session,
+                    item.id,
+                    status="RETRY_WAIT",
+                    next_attempt_at=finished + timedelta(seconds=delay),
+                    last_error_code=code,
+                    last_error_message=message,
+                    **common,
+                )
+            outcome, reason = "RETRYABLE_ERROR", code
         else:
             campaign_repo.update_item(
                 session,
                 item.id,
                 status="FAILED",
-                reason_code=result.code,
-                last_error_code=result.code,
+                reason_code=code,
+                last_error_code=code,
                 last_error_message=message,
                 **common,
             )
-            outcome, reason = "PERMANENT_ERROR", result.code
+            outcome, reason = "PERMANENT_ERROR", code
+            self._register_failure(
+                session, task, code=code, settings=settings, now=finished
+            )
         send_log_repo.insert(
             session,
             task_id=item.task_id,
@@ -397,8 +483,90 @@ class Processor:
             latency_ms=latency_ms,
             created_at=finished,
         )
+        self._maybe_complete(session, item.task_id, finished)
         session.commit()
         return outcome
+
+    def _register_failure(
+        self,
+        session: Session,
+        task: CampaignEntry | None,
+        *,
+        code: str | None,
+        settings: dict[str, Any],
+        now: datetime,
+    ) -> None:
+        if task is None or task.status != "RUNNING":
+            return
+        if code == AUTH_ERROR_CODE:
+            self._open_circuit(
+                session, task, failures=task.consecutive_failures, now=now
+            )
+            return
+        if not breaks_circuit(code):
+            return
+        failures = task.consecutive_failures + 1
+        campaign_repo.update_campaign(
+            session, task.id, consecutive_failures=failures, updated_at=now
+        )
+        threshold = int(settings["sending.circuit_breaker_threshold"])
+        if failures >= threshold:
+            self._open_circuit(session, task, failures=failures, now=now)
+
+    def _open_circuit(
+        self,
+        session: Session,
+        task: CampaignEntry,
+        *,
+        failures: int,
+        now: datetime,
+    ) -> None:
+        campaign_repo.update_campaign(
+            session,
+            task.id,
+            status="PAUSED",
+            pause_reason="CIRCUIT_OPEN",
+            paused_at=now,
+            updated_at=now,
+        )
+        self._audit.record(
+            session,
+            actor="system:worker",
+            action="CAMPAIGN_CIRCUIT_OPENED",
+            entity_type="campaign",
+            entity_id=str(task.id),
+            before={
+                "status": "RUNNING",
+                "consecutive_failures": task.consecutive_failures,
+            },
+            after={
+                "status": "PAUSED",
+                "pause_reason": "CIRCUIT_OPEN",
+                "consecutive_failures": failures,
+            },
+        )
+
+    def _maybe_complete(
+        self, session: Session, task_id: int, now: datetime
+    ) -> bool:
+        task = campaign_repo.get_campaign(session, task_id)
+        if task is None or task.status != "RUNNING":
+            return False
+        if campaign_repo.has_open_items(session, task_id):
+            return False
+        campaign_repo.update_campaign(
+            session, task_id, status="COMPLETED", finished_at=now, updated_at=now
+        )
+        self._audit.record(
+            session,
+            actor="system:worker",
+            action="CAMPAIGN_COMPLETED",
+            entity_type="campaign",
+            entity_id=str(task_id),
+            before={"status": "RUNNING"},
+            after={"status": "COMPLETED"},
+        )
+        return True
 
     @staticmethod
     def _settings(session: Session) -> dict[str, Any]:

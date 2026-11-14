@@ -127,11 +127,20 @@ def messenger(clock: FakeClock) -> MockMessenger:
 
 
 @pytest.fixture
-def worker(app: FastAPI, clock: FakeClock, messenger: MockMessenger) -> Worker:
-    """Worker driven manually through ``tick()`` in tests."""
-    processor = Processor(
-        clock, app.state.phone_cipher, messenger, worker_id="worker-test"
+def processor(app: FastAPI, clock: FakeClock, messenger: MockMessenger) -> Processor:
+    """Processor wired to the test application's cipher and audit services."""
+    return Processor(
+        clock,
+        app.state.phone_cipher,
+        messenger,
+        worker_id="worker-test",
+        audit=app.state.audit_service,
     )
+
+
+@pytest.fixture
+def worker(app: FastAPI, clock: FakeClock, processor: Processor) -> Worker:
+    """Worker driven manually through ``tick()`` in tests."""
     return Worker(
         app.state.session_factory, clock, processor, worker_id="worker-test"
     )
