@@ -21,17 +21,15 @@ class RequestIdFilter(logging.Filter):
         return True
 
 
-class RedactionFilter(logging.Filter):
-    """Sanitize every log message with the injected redactor."""
+class RedactingFormatter(logging.Formatter):
+    """Render a record completely, then redact the finished line including tracebacks."""
 
-    def __init__(self, redactor: Redactor) -> None:
-        super().__init__()
+    def __init__(self, fmt: str, redactor: Redactor) -> None:
+        super().__init__(fmt)
         self._redactor = redactor
 
-    def filter(self, record: logging.LogRecord) -> bool:
-        record.msg = self._redactor(record.getMessage())
-        record.args = ()
-        return True
+    def format(self, record: logging.LogRecord) -> str:
+        return self._redactor(super().format(record))
 
 
 def configure_logging(level: str, *, redactor: Redactor) -> None:
@@ -43,7 +41,6 @@ def configure_logging(level: str, *, redactor: Redactor) -> None:
             return
     handler = logging.StreamHandler()
     handler._beauty_outreach = True  # type: ignore[attr-defined]
-    handler.setFormatter(logging.Formatter(_LOG_FORMAT))
+    handler.setFormatter(RedactingFormatter(_LOG_FORMAT, redactor))
     handler.addFilter(RequestIdFilter())
-    handler.addFilter(RedactionFilter(redactor))
     root.addHandler(handler)

@@ -16,6 +16,7 @@ class Template(Base):
     __tablename__ = "template"
     __table_args__ = (
         UniqueConstraint("name", "version", name="uq_template_name_version"),
+        CheckConstraint("version >= 1", name="ck_template_version"),
         CheckConstraint("status IN ('DRAFT', 'APPROVED', 'DISABLED')", name="ck_template_status"),
         CheckConstraint("length(body) <= 800", name="ck_template_body_length"),
     )

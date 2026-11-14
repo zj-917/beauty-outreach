@@ -14,6 +14,7 @@ from app.core.clock import Clock
 from app.domain.masking import redact
 from app.repositories import audit_repo
 from app.repositories.audit_repo import AuditEntry
+from app.schemas.common import iso_z
 
 GENESIS_HASH = "GENESIS"
 
@@ -25,10 +26,6 @@ class ChainCheck:
     ok: bool
     count: int | None = None
     first_broken_id: int | None = None
-
-
-def _iso_z(value: datetime) -> str:
-    return value.astimezone(UTC).isoformat().replace("+00:00", "Z")
 
 
 def _canonical_json(payload: dict[str, Any]) -> str:
@@ -72,7 +69,7 @@ class AuditService:
         redacted_after = redact(after) if after is not None else None
         prev_hash = audit_repo.last_hash(session) or GENESIS_HASH
         payload = {
-            "ts": _iso_z(ts),
+            "ts": iso_z(ts),
             "actor": actor,
             "action": action,
             "entity_type": entity_type,
@@ -130,7 +127,7 @@ class AuditService:
             if entry.hash is None or entry.prev_hash != expected_prev:
                 return ChainCheck(ok=False, first_broken_id=entry.id)
             payload = {
-                "ts": _iso_z(entry.ts),
+                "ts": iso_z(entry.ts),
                 "actor": entry.actor,
                 "action": entry.action,
                 "entity_type": entry.entity_type,

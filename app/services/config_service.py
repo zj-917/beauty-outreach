@@ -89,12 +89,45 @@ def _rate_rule_snapshot(entry: RateRuleEntry) -> dict[str, Any]:
     }
 
 
+def _resolve_rate_rule_values(
+    existing: RateRuleEntry,
+    name: object,
+    scope: object,
+    window_seconds: object,
+    max_count: object,
+    enabled: object,
+) -> tuple[Any, Any, Any, Any, Any]:
+    return (
+        existing.name if name is None else name,
+        existing.scope if scope is None else scope,
+        existing.window_seconds if window_seconds is None else window_seconds,
+        existing.max_count if max_count is None else max_count,
+        existing.enabled if enabled is None else enabled,
+    )
+
+
+def _ensure_scope_coverage(
+    session: Session,
+    existing: RateRuleEntry,
+    new_scope: str,
+    new_enabled: bool,
+) -> None:
+    if existing.enabled and (not new_enabled or new_scope != existing.scope):
+        remaining = config_repo.count_enabled_rate_rules(session, existing.scope)
+        if remaining <= 1:
+            raise AppError(
+                "CFG_LAST_RATE_RULE",
+                "At least one enabled rule per scope is required",
+                details={"scope": existing.scope},
+            )
+
+
 class ConfigService:
     """Apply configuration changes atomically with audit records."""
 
-    def __init__(self, clock: Clock) -> None:
+    def __init__(self, clock: Clock, audit: AuditService | None = None) -> None:
         self._clock = clock
-        self._audit = AuditService(clock)
+        self._audit = audit or AuditService(clock)
 
     def list_keywords(self, session: Session) -> list[KeywordEntry]:
         """Return all keywords."""
@@ -166,6 +199,8 @@ class ConfigService:
         new_enabled = existing.enabled if enabled is None else enabled
         _require_weight(new_weight)
         _require_bool(new_enabled, "enabled")
+        if new_weight == existing.weight and new_enabled == existing.enabled:
+            return existing
         if (
             not existing.enabled
             and new_enabled
@@ -280,20 +315,20 @@ class ConfigService:
             for value in (name, scope, window_seconds, max_count, enabled)
         ):
             return existing
-        new_name = existing.name if name is None else name
-        new_scope = existing.scope if scope is None else scope
-        new_window = existing.window_seconds if window_seconds is None else window_seconds
-        new_max = existing.max_count if max_count is None else max_count
-        new_enabled = existing.enabled if enabled is None else enabled
-        _require_rate_rule_values(new_name, new_scope, new_window, new_max, new_enabled)
-        if existing.enabled and (not new_enabled or new_scope != existing.scope):
-            remaining = config_repo.count_enabled_rate_rules(session, existing.scope)
-            if remaining <= 1:
-                raise AppError(
-                    "CFG_LAST_RATE_RULE",
-                    "At least one enabled rule per scope is required",
-                    details={"scope": existing.scope},
-                )
+        values = _resolve_rate_rule_values(
+            existing, name, scope, window_seconds, max_count, enabled
+        )
+        new_name, new_scope, new_window, new_max, new_enabled = values
+        _require_rate_rule_values(*values)
+        if values == (
+            existing.name,
+            existing.scope,
+            existing.window_seconds,
+            existing.max_count,
+            existing.enabled,
+        ):
+            return existing
+        _ensure_scope_coverage(session, existing, new_scope, new_enabled)
         updated = config_repo.update_rate_rule(
             session,
             rule_id,

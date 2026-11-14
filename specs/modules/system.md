@@ -11,7 +11,7 @@
 - **鉴权**：`/api/v1/*` 需 `X-Admin-Token`，用 `hmac.compare_digest` 比较；豁免：`/healthz`、`/docs`、`/openapi.json`、`/admin/*` 静态资源、`/api/v1/webhooks/*`（改用签名）。`/demo/*` 同样需 token，且仅 `DEMO_MODE=true` 时存在。
 - **Webhook 签名**：`X-Hub-Signature-256: sha256=<hex>`，HMAC-SHA256(`WEBHOOK_SECRET`, **原始请求体字节**)；缺失 / 不匹配 → `401 SIGNATURE_INVALID`，**不解析、不写库**。
 - **Clock**：`core/clock.py` 提供 `Clock` 协议（`now() -> datetime(UTC)`、`monotonic()`、`sleep()`）、`SystemClock`、`FakeClock(advance(), set())`。业务代码只依赖注入的 `Clock`。
-- **SQLite**：连接建立时 `PRAGMA journal_mode=WAL; foreign_keys=ON; busy_timeout=5000;`；写事务统一以 `BEGIN IMMEDIATE` 开始（SQLAlchemy 事件钩子）。
+- **SQLite**：连接建立时 `PRAGMA journal_mode=WAL; foreign_keys=ON; busy_timeout=5000;`；数据库事务（含只读）统一以 `BEGIN IMMEDIATE` 开始（SQLAlchemy 事件钩子，Q-15；单进程原型接受读串行化）。
 - **网络隔离**：测试夹具（autouse）拦截 `socket.connect` 到非回环地址并报错；`MESSENGER_PROVIDER=whatsapp_cloud`（Stub）时，`start` 任务返回 `501 PROVIDER_NOT_ENABLED`。
 - **优雅关闭**：`lifespan` 退出时通知 Worker 停止，Worker 在当前明细处理完（或超过 5 秒）后退出；未完成的明细靠租约过期恢复。
 - **健康检查**：`GET /healthz` → `{"status":"ok","db":"ok","worker":"running|disabled","version":"…"}`；数据库不可用 → 503。
@@ -29,7 +29,7 @@
 | AC-SYS-005 | P0 | 给定 `app/` 源码，则除 `core/clock.py` 外无直接时间 / sleep 调用（静态扫描通过）；`FakeClock` 推进后依赖时间的行为随之变化 |
 | AC-SYS-006 | P0 | 给定测试运行，则网络守卫夹具生效（对外连接立即报错，有测试证明）；给定 `MESSENGER_PROVIDER=whatsapp_cloud`，当 `start` 任务，则 501 `PROVIDER_NOT_ENABLED` 且无网络调用 |
 | AC-SYS-007 | P0 | 给定全新环境，当按 README 的 ≤ 5 条命令操作（安装 → 复制 `.env` → seed → 启动 → 打开 `/docs`），则应用成功启动；有冒烟测试以 `TestClient` 走一遍 lifespan |
-| AC-SYS-008 | P0 | 给定任一数据库连接，则 `journal_mode=wal`、`foreign_keys=1`、`busy_timeout≥5000`；外键约束真实生效（插入悬空外键失败）；写事务以 `BEGIN IMMEDIATE` 开始 |
+| AC-SYS-008 | P0 | 给定任一数据库连接，则 `journal_mode=wal`、`foreign_keys=1`、`busy_timeout≥5000`；外键约束真实生效（插入悬空外键失败）；事务（含只读）以 `BEGIN IMMEDIATE` 开始 |
 | AC-SYS-009 | P0 | 给定 webhook 请求，当签名缺失或错误，则 401 `SIGNATURE_INVALID`，且无任何数据库写入（含审计）；签名正确则正常处理 |
 | AC-SYS-010 | P1 | 给定 Worker 正在处理，当应用关闭，则 Worker 在 5 秒内停止；处理中的明细要么完成要么保持可被租约回收的状态 |
 | AC-SYS-011 | P0 | 给定种子数据，当运行 `python scripts/demo.py --fast`，则完整流程跑通、`05-mock-data.md` §3 的预期数字全部断言通过、退出码 0；该脚本同时作为 e2e 测试 |

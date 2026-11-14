@@ -45,6 +45,13 @@ def test_AC_LEAD_015_lead_filters_and_pagination(client: TestClient) -> None:
     assert (len(page["items"]), page["total"], page["page"]) == (10, 44, 2)
 
 
+def test_AC_LEAD_015_q_treats_like_wildcards_literally(client: TestClient) -> None:
+    """Given q containing a LIKE wildcard, when filtered, then it matches literal text only."""
+    _import_mock(client)
+    assert client.get("/api/v1/leads", params={"q": "glow%"}).json()["total"] == 0
+    assert client.get("/api/v1/leads", params={"q": "glow"}).json()["total"] > 0
+
+
 def test_AC_LEAD_015_batch_detail_and_lead_detail_are_safe(client: TestClient) -> None:
     """Given a batch, when read back, then the full report and masked lead are returned."""
     batch = _import_mock(client)

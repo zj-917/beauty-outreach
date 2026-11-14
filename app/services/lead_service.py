@@ -54,10 +54,12 @@ class _RowFields:
 class LeadService:
     """Import lead batches atomically and expose read models."""
 
-    def __init__(self, clock: Clock, cipher: PhoneCipher) -> None:
+    def __init__(
+        self, clock: Clock, cipher: PhoneCipher, audit: AuditService | None = None
+    ) -> None:
         self._clock = clock
         self._cipher = cipher
-        self._audit = AuditService(clock)
+        self._audit = audit or AuditService(clock)
 
     @staticmethod
     def source_by_name(name: object) -> LeadSource:

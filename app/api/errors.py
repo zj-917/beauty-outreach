@@ -84,6 +84,5 @@ def register_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(Exception)
     async def _unexpected_error(request: Request, exc: Exception) -> JSONResponse:
-        request_id = _request_id(request)
-        logger.exception("unhandled exception request_id=%s", request_id)
+        logger.exception("unhandled exception")
         return _error_response(request, "INTERNAL_ERROR", "Internal server error", 500)

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from app.domain.masking import redact, redact_text
+from app.domain.masking import redact, redact_log_text, redact_text
 
 
 def test_AC_AUD_008_redact_drops_sensitive_fields_and_masks_phones() -> None:
@@ -48,3 +48,16 @@ def test_AC_AUD_008_redact_text_keeps_request_ids() -> None:
     assert redact_text(f"request_id={hex_id}") == f"request_id={hex_id}"
     assert redact_text(f"request_id={uuid}") == f"request_id={uuid}"
     assert redact_text("call +1 555-555-0101 now") == "call +1 5****0101 now"
+
+
+def test_AC_AUD_008_redact_text_keeps_date_and_masks_adjacent_phone() -> None:
+    """Given a date next to a phone, when redacted, then only the phone is masked."""
+    assert redact_text("2026-11-14") == "2026-11-14"
+    assert redact_text("2026-11-14 555-555-0101") == "2026-11-14 555-****0101"
+    assert redact_text("555-555-0101") == "555-****0101"
+
+
+def test_AC_AUD_008_redact_log_text_masks_the_whole_header_value() -> None:
+    """Given a header value with spaces, when redacted, then the entire value is masked."""
+    assert redact_log_text("Authorization: Bearer abc def ghi") == "Authorization: ***"
+    assert redact_log_text("x-admin-token=abc def") == "x-admin-token: ***"

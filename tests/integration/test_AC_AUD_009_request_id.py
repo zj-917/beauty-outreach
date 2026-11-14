@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
+import io
 import logging
 import re
 
-import pytest
 from fastapi.testclient import TestClient
 
 from app.core.clock import FakeClock
 from app.core.config import Settings
+from app.core.logging import RedactingFormatter, RequestIdFilter
+from app.domain.masking import redact_log_text
 from app.main import create_app
 
 
@@ -38,12 +40,20 @@ def test_AC_AUD_009_invalid_request_id_is_replaced(
 
 
 def test_AC_AUD_009_request_id_is_written_to_logs(
-    settings: Settings, clock: FakeClock, caplog: pytest.LogCaptureFixture
+    settings: Settings, clock: FakeClock
 ) -> None:
-    """Given a request, when handled, then its request id appears in log records."""
-    caplog.set_level(logging.INFO)
-    app = create_app(settings=settings, clock=clock)
-    with TestClient(app) as client:
-        client.get("/healthz", headers={"X-Request-ID": "log-req-1"})
-    messages = [record.getMessage() for record in caplog.records]
-    assert any("request.start" in message and "log-req-1" in message for message in messages)
+    """Given a request, when handled, then its request id appears in the formatted log line."""
+    stream = io.StringIO()
+    handler = logging.StreamHandler(stream)
+    handler.addFilter(RequestIdFilter())
+    handler.setFormatter(RedactingFormatter("%(request_id)s %(message)s", redact_log_text))
+    logger = logging.getLogger("app.api.middleware")
+    logger.addHandler(handler)
+    try:
+        app = create_app(settings=settings, clock=clock)
+        with TestClient(app) as client:
+            client.get("/healthz", headers={"X-Request-ID": "log-req-1"})
+    finally:
+        logger.removeHandler(handler)
+    output = stream.getvalue()
+    assert re.search(r"log-req-1 request\.start", output)

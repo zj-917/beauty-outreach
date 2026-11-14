@@ -83,6 +83,7 @@ A 类 20 条中：6 条本无号码，另有 1 条号码非法被丢弃 → **�
 
 - **Precision** = 被自动入池且标注为 relevant 的数 ÷ 被自动入池的总数（目标 ≥ 0.95）
 - **Recall** = 被自动入池且标注为 relevant 的数 ÷ relevant 总数（目标 ≥ 0.85，即 20 条至少 17 条）
+  - 标注层面共有 24 条 `relevant`（A 类 20 + E 类 4）；E 类 4 行是重复行，导入后不产生新 lead，F 类 4 行非法不入库。Precision / Recall 必须按「导入后的 lead」计算（relevant 分母为 20），E/F 行不参与。
 - **边缘带准确率** = B 类落入 `PENDING_REVIEW` 的比例（目标 ≥ 0.75）
 - 混淆矩阵 + 每条错判的 `score_reasons`（便于调参，对应 SCR-014）
 

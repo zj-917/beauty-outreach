@@ -250,12 +250,13 @@ def list_leads(
     if batch_id is not None:
         conditions.append(Lead.batch_id == batch_id)
     if q:
-        pattern = f"%{q}%"
+        escaped = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        pattern = f"%{escaped}%"
         conditions.append(
             or_(
-                Lead.username.ilike(pattern),
-                Lead.display_name.ilike(pattern),
-                Lead.bio.ilike(pattern),
+                Lead.username.ilike(pattern, escape="\\"),
+                Lead.display_name.ilike(pattern, escape="\\"),
+                Lead.bio.ilike(pattern, escape="\\"),
             )
         )
     if region:

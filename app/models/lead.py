@@ -79,7 +79,13 @@ class Lead(Base):
             name="ck_lead_decision_source",
         ),
         Index("ix_lead_status_score", "status", "score"),
-        Index("ix_lead_phone_hash", "phone_hash"),
+        Index("ix_lead_batch_id", "batch_id"),
+        Index(
+            "uq_lead_phone_hash",
+            "phone_hash",
+            unique=True,
+            sqlite_where=text("phone_hash IS NOT NULL"),
+        ),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)

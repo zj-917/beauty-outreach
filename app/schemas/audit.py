@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, field_serializer
+
+from app.schemas.common import iso_z
 
 
 class AuditLogView(BaseModel):
@@ -25,7 +27,7 @@ class AuditLogView(BaseModel):
 
     @field_serializer("ts")
     def serialize_ts(self, value: datetime) -> str:
-        return value.astimezone(UTC).isoformat().replace("+00:00", "Z")
+        return iso_z(value)
 
 
 class AuditPage(BaseModel):

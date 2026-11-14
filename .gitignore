@@ -17,6 +17,8 @@ data/*.db-shm
 
 # Tool caches
 .pytest_cache/
+.pytest_tmp/
+.pytest_basetemp/
 .ruff_cache/
 .pytest_tmp/
 .coverage

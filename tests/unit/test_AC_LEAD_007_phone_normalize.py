@@ -24,9 +24,6 @@ from app.domain.phone import normalize_phone
         (12345, None),
     ],
 )
-def test_AC_LEAD_003_normalize_phone(raw: object, expected: str | None) -> None:
-    """Covers: AC-LEAD-003, AC-LEAD-007.
-
-    Given raw phone values, when normalized, then E.164 is returned or None.
-    """
+def test_AC_LEAD_007_normalize_phone(raw: object, expected: str | None) -> None:
+    """Given raw phone values, when normalized, then E.164 is returned or None."""
     assert normalize_phone(raw) == expected

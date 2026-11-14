@@ -35,9 +35,9 @@ class ScreeningReport:
 class ScreeningService:
     """Apply the rule scorer to NEW, PENDING_REVIEW and DISCARDED leads."""
 
-    def __init__(self, clock: Clock) -> None:
+    def __init__(self, clock: Clock, audit: AuditService | None = None) -> None:
         self._clock = clock
-        self._audit = AuditService(clock)
+        self._audit = audit or AuditService(clock)
 
     def run(
         self,

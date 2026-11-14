@@ -22,7 +22,9 @@ def screen_leads(
     payload: ScreeningRequest | None = None,
 ) -> ScreeningResult:
     """Score and decide leads, optionally scoped to a batch or explicit ids."""
-    report = ScreeningService(request.app.state.clock).run(
+    report = ScreeningService(
+        request.app.state.clock, request.app.state.audit_service
+    ).run(
         session,
         batch_id=payload.batch_id if payload else None,
         lead_ids=payload.lead_ids if payload else None,

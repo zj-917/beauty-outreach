@@ -23,17 +23,41 @@ FERNET_TEST_KEY = "ZmDfcTF7_60GrrY167zsiPd67pEvs0ouEkuFfKjGmS0="
 
 @pytest.fixture(autouse=True)
 def no_network(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Block outbound socket connections for every test."""
-    original_connect = socket.socket.connect
+    """Block outbound sockets, DNS lookups and datagrams for every test."""
+    allowed = {"127.0.0.1", "::1", "localhost", "testserver"}
 
-    def guarded_connect(self: socket.socket, address: object) -> None:
-        host = address[0] if isinstance(address, tuple) else address
-        if isinstance(host, str) and host in {"127.0.0.1", "::1", "localhost"}:
-            original_connect(self, address)
+    def check_host(host: object) -> None:
+        if isinstance(host, str) and host in allowed:
             return
         raise RuntimeError("network access is disabled in tests")
 
+    original_connect = socket.socket.connect
+    original_connect_ex = socket.socket.connect_ex
+    original_sendto = socket.socket.sendto
+    original_getaddrinfo = socket.getaddrinfo
+
+    def guarded_connect(self: socket.socket, address: object) -> None:
+        check_host(address[0] if isinstance(address, tuple) else address)
+        original_connect(self, address)
+
+    def guarded_connect_ex(self: socket.socket, address: object) -> int:
+        check_host(address[0] if isinstance(address, tuple) else address)
+        return original_connect_ex(self, address)
+
+    def guarded_sendto(self: socket.socket, data: bytes, *args: object) -> int:
+        last = args[-1]
+        check_host(last[0] if isinstance(last, tuple) else last)
+        return original_sendto(self, data, *args)
+
+    def guarded_getaddrinfo(host: object, *args: object, **kwargs: object):
+        if host is not None:
+            check_host(host)
+        return original_getaddrinfo(host, *args, **kwargs)
+
     monkeypatch.setattr(socket.socket, "connect", guarded_connect)
+    monkeypatch.setattr(socket.socket, "connect_ex", guarded_connect_ex)
+    monkeypatch.setattr(socket.socket, "sendto", guarded_sendto)
+    monkeypatch.setattr(socket, "getaddrinfo", guarded_getaddrinfo)
 
 
 @pytest.fixture

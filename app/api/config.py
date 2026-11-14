@@ -26,13 +26,17 @@ def _request_id(request: Request) -> str | None:
     return getattr(request.state, "request_id", None)
 
 
+def _service(request: Request) -> ConfigService:
+    return ConfigService(request.app.state.clock, request.app.state.audit_service)
+
+
 @router.get("/keywords", response_model=list[KeywordView])
 def list_keywords(
     request: Request,
     session: Annotated[Session, Depends(get_session)],
 ) -> list[KeywordView]:
     """Return all keywords."""
-    entries = ConfigService(request.app.state.clock).list_keywords(session)
+    entries = _service(request).list_keywords(session)
     return [KeywordView.model_validate(entry) for entry in entries]
 
 
@@ -44,7 +48,7 @@ def create_keyword(
     operator: Annotated[str, Depends(get_operator)],
 ) -> KeywordView:
     """Create a keyword after normalization."""
-    entry = ConfigService(request.app.state.clock).create_keyword(
+    entry = _service(request).create_keyword(
         session,
         term=payload.term,
         kind=payload.kind,
@@ -65,7 +69,7 @@ def update_keyword(
     operator: Annotated[str, Depends(get_operator)],
 ) -> KeywordView:
     """Update a keyword's weight or enabled state."""
-    entry = ConfigService(request.app.state.clock).update_keyword(
+    entry = _service(request).update_keyword(
         session,
         keyword_id,
         weight=payload.weight,
@@ -84,7 +88,7 @@ def delete_keyword(
     operator: Annotated[str, Depends(get_operator)],
 ) -> Response:
     """Delete a keyword."""
-    ConfigService(request.app.state.clock).delete_keyword(
+    _service(request).delete_keyword(
         session,
         keyword_id,
         actor=operator,
@@ -99,7 +103,7 @@ def list_rate_rules(
     session: Annotated[Session, Depends(get_session)],
 ) -> list[RateRuleView]:
     """Return all rate rules."""
-    entries = ConfigService(request.app.state.clock).list_rate_rules(session)
+    entries = _service(request).list_rate_rules(session)
     return [RateRuleView.model_validate(entry) for entry in entries]
 
 
@@ -111,7 +115,7 @@ def create_rate_rule(
     operator: Annotated[str, Depends(get_operator)],
 ) -> RateRuleView:
     """Create a rate rule."""
-    entry = ConfigService(request.app.state.clock).create_rate_rule(
+    entry = _service(request).create_rate_rule(
         session,
         name=payload.name,
         scope=payload.scope,
@@ -133,7 +137,7 @@ def update_rate_rule(
     operator: Annotated[str, Depends(get_operator)],
 ) -> RateRuleView:
     """Update a rate rule."""
-    entry = ConfigService(request.app.state.clock).update_rate_rule(
+    entry = _service(request).update_rate_rule(
         session,
         rule_id,
         name=payload.name,
@@ -155,7 +159,7 @@ def delete_rate_rule(
     operator: Annotated[str, Depends(get_operator)],
 ) -> Response:
     """Delete a rate rule unless it is the last enabled one in its scope."""
-    ConfigService(request.app.state.clock).delete_rate_rule(
+    _service(request).delete_rate_rule(
         session,
         rule_id,
         actor=operator,
@@ -170,7 +174,7 @@ def get_settings(
     session: Annotated[Session, Depends(get_session)],
 ) -> dict[str, Any]:
     """Return all runtime settings merged with registry defaults."""
-    return ConfigService(request.app.state.clock).get_settings(session)
+    return _service(request).get_settings(session)
 
 
 @router.put("/settings")
@@ -181,7 +185,7 @@ def update_settings(
     operator: Annotated[str, Depends(get_operator)],
 ) -> dict[str, Any]:
     """Apply a partial runtime settings update atomically."""
-    return ConfigService(request.app.state.clock).update_settings(
+    return _service(request).update_settings(
         session,
         payload.root,
         actor=operator,

@@ -16,7 +16,11 @@ router = APIRouter(prefix="/api/v1", tags=["leads"])
 
 
 def _service(request: Request) -> LeadService:
-    return LeadService(request.app.state.clock, request.app.state.phone_cipher)
+    return LeadService(
+        request.app.state.clock,
+        request.app.state.phone_cipher,
+        request.app.state.audit_service,
+    )
 
 
 def _request_id(request: Request) -> str | None:

@@ -44,7 +44,7 @@ class RequestContextMiddleware:
 
         method = scope.get("method", "")
         path = scope.get("path", "")
-        logger.info("request.start method=%s path=%s request_id=%s", method, path, request_id)
+        logger.info("request.start method=%s path=%s", method, path)
         try:
             await self.app(scope, receive, send_with_header)
         except Exception:
@@ -52,11 +52,10 @@ class RequestContextMiddleware:
             raise
         finally:
             logger.info(
-                "request.end method=%s path=%s status=%s request_id=%s",
+                "request.end method=%s path=%s status=%s",
                 method,
                 path,
                 status["code"],
-                request_id,
             )
             request_id_var.reset(token)
 

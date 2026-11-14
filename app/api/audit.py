@@ -5,10 +5,10 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_session
+from app.api.deps import get_audit_service, get_session
 from app.schemas.audit import AuditLogView, AuditPage, ChainVerification
 from app.services.audit_service import AuditService
 
@@ -17,8 +17,8 @@ router = APIRouter(prefix="/api/v1/audit-logs", tags=["audit"])
 
 @router.get("", response_model=AuditPage)
 def list_audit_logs(
-    request: Request,
     session: Annotated[Session, Depends(get_session)],
+    audit: Annotated[AuditService, Depends(get_audit_service)],
     actor: str | None = None,
     action: str | None = None,
     entity_type: str | None = None,
@@ -29,8 +29,7 @@ def list_audit_logs(
     page_size: Annotated[int, Query(ge=1, le=100)] = 20,
 ) -> AuditPage:
     """List audit records with filters and pagination, newest first."""
-    service = AuditService(request.app.state.clock)
-    entries, total = service.list_logs(
+    entries, total = audit.list_logs(
         session,
         actor=actor,
         action=action,
@@ -51,11 +50,11 @@ def list_audit_logs(
 
 @router.get("/verify", response_model=ChainVerification, response_model_exclude_none=True)
 def verify_audit_logs(
-    request: Request,
     session: Annotated[Session, Depends(get_session)],
+    audit: Annotated[AuditService, Depends(get_audit_service)],
 ) -> ChainVerification:
     """Verify the audit hash chain and report the first broken row."""
-    result = AuditService(request.app.state.clock).verify_chain(session)
+    result = audit.verify_chain(session)
     return ChainVerification(
         ok=result.ok,
         count=result.count,

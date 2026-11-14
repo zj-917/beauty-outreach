@@ -64,7 +64,7 @@ erDiagram
 | decision_source | text null | `AUTO` \| `MANUAL` |
 | reviewed_by / reviewed_at / review_note | | 人工审核信息 |
 | created_at / updated_at | datetime | |
-| | | 索引：`(status, score)`、`phone_hash` |
+| | | 索引：`(status, score)`、`batch_id`；`phone_hash` 部分唯一索引（`WHERE phone_hash IS NOT NULL`，INV-11） |
 
 ### 2.4 `contact_consent`（授权）
 | 列 | 类型 | 说明 |
@@ -104,7 +104,7 @@ erDiagram
 | status | text | `DRAFT` \| `APPROVED` \| `DISABLED` |
 | created_by / approved_by | text | |
 | approved_at / created_at | datetime | |
-| | | **UNIQUE(name, version)**；APPROVED 后 body 不可变（服务层强制） |
+| | | **UNIQUE(name, version)**；`CHECK(version >= 1)`；APPROVED 后 body 不可变（服务层强制） |
 
 ### 2.7 `rate_rule`（频控规则）
 | 列 | 类型 | 说明 |
@@ -273,6 +273,7 @@ stateDiagram-v2
 | INV-8 | `SENT/DELIVERED/READ` 明细必有 `provider_message_id` | 服务层 + 测试 |
 | INV-9 | 终态 `SKIPPED`/`FAILED` 明细必有 `reason_code` | 服务层 + 测试 |
 | INV-10 | 至少存在一条启用的 GLOBAL 和一条启用的 PER_RECIPIENT 规则 | CFG-008 |
+| INV-11 | 一个手机号至多一条 lead | 部分唯一索引 `(phone_hash) WHERE phone_hash IS NOT NULL` |
 
 ## 5. 手机号处理规则
 

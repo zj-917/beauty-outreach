@@ -9,6 +9,7 @@ from fastapi import Request
 from sqlalchemy.orm import Session
 
 from app.core.errors import AppError
+from app.services.audit_service import AuditService
 
 _OPERATOR_RE = re.compile(r"^[A-Za-z0-9_.@-]{1,40}$")
 
@@ -20,6 +21,11 @@ def get_session(request: Request) -> Iterator[Session]:
         yield session
     finally:
         session.close()
+
+
+def get_audit_service(request: Request) -> AuditService:
+    """Return the application-wide audit service."""
+    return request.app.state.audit_service
 
 
 def get_operator(request: Request) -> str:

@@ -31,7 +31,7 @@ include = ["app*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--basetemp=.pytest_tmp"
+addopts = "--basetemp=.pytest_basetemp"
 
 [tool.ruff]
 target-version = "py311"

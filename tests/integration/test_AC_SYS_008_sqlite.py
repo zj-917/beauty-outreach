@@ -26,7 +26,8 @@ EXPECTED_TABLES = {
 
 EXPECTED_INDEXES = {
     "ix_lead_status_score",
-    "ix_lead_phone_hash",
+    "ix_lead_batch_id",
+    "uq_lead_phone_hash",
     "uq_suppression_type_phone",
     "uq_suppression_type_username",
     "ix_task_item_task_status",
@@ -170,3 +171,41 @@ def test_AC_SYS_008_suppression_partial_unique_indexes(db: Engine) -> None:
         connection.exec_driver_sql(insert_sql, (None, "u1", TS))
     with db.begin() as connection:
         connection.exec_driver_sql(insert_sql, (None, "u2", TS))
+
+
+def test_AC_SYS_008_read_transactions_also_begin_immediate(db: Engine) -> None:
+    """Given a read-only statement, when traced, then it also opens with BEGIN IMMEDIATE."""
+    statements: list[str] = []
+    with db.connect() as connection:
+        driver = connection.connection.driver_connection
+        driver.set_trace_callback(statements.append)
+        try:
+            connection.exec_driver_sql("SELECT 1").scalar()
+        finally:
+            driver.set_trace_callback(None)
+    assert any(statement.strip().upper() == "BEGIN IMMEDIATE" for statement in statements)
+
+
+def test_AC_SYS_008_lead_phone_hash_is_unique_when_present(db: Engine) -> None:
+    """Given two leads with the same phone hash, when inserted, then the partial index fails."""
+    _seed_campaign_graph(db)
+    insert_sql = (
+        "INSERT INTO lead (batch_id, username, phone_hash, status, created_at, updated_at) "
+        "VALUES (1, ?, ?, 'NEW', ?, ?)"
+    )
+    with db.begin() as connection:
+        connection.exec_driver_sql(insert_sql, ("u3", "hash-1", TS, TS))
+        connection.exec_driver_sql(insert_sql, ("u4", None, TS, TS))
+    with pytest.raises(IntegrityError), db.begin() as connection:
+        connection.exec_driver_sql(insert_sql, ("u5", "hash-1", TS, TS))
+
+
+def test_AC_SYS_008_template_version_must_be_positive(db: Engine) -> None:
+    """Given version 0, when inserted, then the check constraint rejects it."""
+    with pytest.raises(IntegrityError), db.begin() as connection:
+        connection.exec_driver_sql(
+            "INSERT INTO template "
+            "(name, version, language, body, status, created_by, created_at) "
+            "VALUES ('greeting', 0, 'en', 'hi', 'DRAFT', 'admin', ?)",
+            (TS,),
+        )

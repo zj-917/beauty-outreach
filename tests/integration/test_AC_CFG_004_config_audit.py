@@ -49,3 +49,29 @@ def test_AC_CFG_004_changes_write_audit_with_before_and_after(
     assert setting_logs["items"][0]["entity_id"] == "message.brand"
     assert setting_logs["items"][0]["before"] == {"value": "GlowLab"}
     assert setting_logs["items"][0]["after"] == {"value": "AuditBrand"}
+
+
+def test_AC_CFG_004_noop_updates_write_no_audit(client: TestClient) -> None:
+    """Given an update that changes nothing, when applied, then no audit row is written."""
+    keyword = client.post(
+        "/api/v1/keywords",
+        json={"term": "beauty", "kind": "POSITIVE", "weight": 10},
+    ).json()
+    client.patch(
+        f"/api/v1/keywords/{keyword['id']}",
+        json={"weight": 10, "enabled": True},
+    )
+    rule = client.post(
+        "/api/v1/rate-rules",
+        json={"name": "r", "scope": "GLOBAL", "window_seconds": 10, "max_count": 5},
+    ).json()
+    client.patch(
+        f"/api/v1/rate-rules/{rule['id']}",
+        json={"window_seconds": 10, "max_count": 5},
+    )
+
+    logs = client.get("/api/v1/audit-logs").json()
+    assert [item["action"] for item in logs["items"]] == [
+        "RATE_RULE_CREATED",
+        "KEYWORD_CREATED",
+    ]

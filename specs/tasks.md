@@ -51,4 +51,6 @@
 - **T-12**：认领用 `BEGIN IMMEDIATE`；Provider 调用**不得**在写事务内；闸门判定每条实时查库。
 - **T-13**：崩溃恢复测试用"手工构造 `SENDING` + 过期租约"，不要真的杀进程。
 - **T-18**：禁止 `innerHTML` 赋值；先做 ★ 页，配置页最后做。
-- **T-19**：权重调整后须同步更新 `screening.md` §6 与 `05-mock-data.md` §6.1，并记入 `CHANGELOG.md`。
+- **T-10**：AC-SYS-003 的期望路径清单 = `04-api-contract.md` 中全部非 P2 的 `/api/v1` 端点 + `/healthz`；`WhatsAppCloudStub` 只返回 `501 PROVIDER_NOT_ENABLED`，不建立任何网络路径。
+- **T-11**：AC-SYS-006 的 `MESSENGER_PROVIDER=whatsapp_cloud` 前置检查在 `POST /campaigns/{id}/start` 返回 `501 PROVIDER_NOT_ENABLED`；检查顺序按 Q-11（模板 APPROVED → 非终态明细 → Provider 可用），失败时任务状态不变。
+- **T-19**：权重调整后须同步更新 `screening.md` §6 与 `05-mock-data.md` §6.1，并记入 `CHANGELOG.md`；`mock_leads.json` 有 24 条 `expected_label=relevant`（A 类 20 + E 类 4），E 类 4 行是重复行、导入后不产生 lead，Precision/Recall 必须按「导入后的 lead」计算（relevant 分母 20），E/F 行跳过。

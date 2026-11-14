@@ -24,7 +24,7 @@
 
 ### 4.1 写入
 - `AuditService.record(session, actor, action, entity_type, entity_id, before, after)`：**必须传入业务所在的同一 Session**，不自行提交——业务回滚则审计一并回滚（AUD-002）。
-- 所有写事务使用 `BEGIN IMMEDIATE`（`core/db.py` 钩子），保证读取"上一条哈希"与写入之间无并发插入，哈希链不分叉。
+- 所有数据库事务（含只读）使用 `BEGIN IMMEDIATE`（`core/db.py` 钩子，Q-15），保证读取"上一条哈希"与写入之间无并发插入，哈希链不分叉。
 - `before/after` 先经 `redact()`：号码 → 掩码；移除 `body`、`rendered_body`、`token`、`secret`、`password`、`key` 字段；字符串中的类号码序列 → 掩码。
 
 ### 4.2 动作注册表（`action`）

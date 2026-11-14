@@ -22,6 +22,7 @@ from app.core.logging import configure_logging
 from app.core.security import PhoneCipher
 from app.domain.masking import redact_log_text
 from app.models import create_schema
+from app.services.audit_service import AuditService
 from app.services.seed_service import database_is_empty, seed_defaults
 
 
@@ -53,6 +54,7 @@ def create_app(
     create_schema(engine)
     app.state.settings = settings
     app.state.clock = clock or SystemClock()
+    app.state.audit_service = AuditService(app.state.clock)
     app.state.messenger = messenger
     app.state.phone_cipher = PhoneCipher(
         settings.phone_enc_key, settings.phone_hash_key

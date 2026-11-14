@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-import inspect
-
+import pytest
 from fastapi.testclient import TestClient
 
 from app.core import security
@@ -44,7 +43,26 @@ def test_AC_SYS_002_exempt_paths_and_valid_token(
         assert authed.status_code == 404
 
 
-def test_AC_SYS_002_token_comparison_is_constant_time() -> None:
-    """Given the auth helper, when inspected, then it uses hmac.compare_digest."""
-    source = inspect.getsource(security.verify_admin_token)
-    assert "compare_digest" in source
+def test_AC_SYS_002_token_comparison_is_constant_time(
+    settings: Settings, clock: FakeClock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Given the auth path, when checking tokens, then verify_admin_token decides the outcome."""
+    calls: list[tuple[str, str]] = []
+    original = security.verify_admin_token
+
+    def spy(provided: str | None, expected: str) -> bool:
+        calls.append((provided or "", expected))
+        return original(provided, expected)
+
+    monkeypatch.setattr("app.api.middleware.verify_admin_token", spy)
+    app = create_app(settings=settings, clock=clock)
+    with TestClient(app) as client:
+        assert client.get("/api/v1/anything").status_code == 401
+        authed = client.get(
+            "/api/v1/anything", headers={"X-Admin-Token": settings.admin_token}
+        )
+        assert authed.status_code == 404
+    assert len(calls) == 2
+    assert calls[1] == (settings.admin_token, settings.admin_token)
+    assert original(None, "x") is False
+    assert original("x", "x") is True
