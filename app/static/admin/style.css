@@ -741,6 +741,138 @@ td input {
   word-break: break-word;
 }
 
+/* ---------- guidance & explanations ---------- */
+
+.topbar-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.topbar-hint {
+  color: var(--muted);
+  font-size: 11.5px;
+}
+
+.guide {
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  background: var(--accent-soft);
+  border: 1px solid #dde1ea;
+  border-radius: var(--radius-panel);
+}
+
+.guide-title {
+  margin-bottom: 4px;
+  color: var(--accent-strong);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.guide-text {
+  margin-bottom: 6px;
+  color: var(--ink-2);
+  font-size: 12.5px;
+}
+
+.guide-steps {
+  margin: 6px 0 8px;
+  padding-left: 18px;
+  color: var(--ink-2);
+  font-size: 12.5px;
+}
+
+.guide-steps li {
+  margin-bottom: 3px;
+}
+
+.guide-steps.compact {
+  margin-top: 0;
+}
+
+.guide-next {
+  margin: 6px 0;
+  color: var(--accent-strong);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.guide .primary {
+  margin-top: 2px;
+}
+
+.panel-note {
+  margin: -4px 0 12px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.field-hint {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.file-field {
+  min-width: 200px;
+}
+
+.reason-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.reason-chip {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: var(--radius-pill);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 11px;
+  line-height: 1.7;
+  white-space: nowrap;
+}
+
+.state-note {
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  background: var(--surface-quiet);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 10px;
+}
+
+.state-note-title {
+  margin-bottom: 4px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.state-note-next {
+  margin-bottom: 4px;
+  color: var(--accent-strong);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.setting-item {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 3px;
+}
+
+.setting-desc {
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.small {
+  font-size: 11.5px;
+}
+
 /* ---------- responsive ---------- */
 
 @media (max-width: 900px) {

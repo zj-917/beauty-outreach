@@ -27,7 +27,7 @@ def test_ac_coverage_report_lists_every_ac_and_passes(tmp_path: Path) -> None:
     assert result.returncode == 0, result.stdout + result.stderr
 
     report = output.read_text(encoding="utf-8")
-    assert report.count("\n| AC-") == 142
+    assert report.count("\n| AC-") == 145
     assert "| AC-SYS-007 | P0 |" in report
     assert "test_AC_SYS_007_fresh_startup_smoke_test_runs_lifespan" in report
     assert "| AC-SYS-010 | P1 |" in report

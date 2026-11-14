@@ -31,8 +31,9 @@
 | ☑ | T-20 | 集成与 E2E 测试补齐（E2E-1~10）、泄漏扫描、冒烟测试、优雅关闭、`ac_coverage.py` | SYS-007, SYS-010, AUD-007（泄漏扫描部分） | 全部 | 1.5h（实际 ≈1.5h） | M5 |
 | ☑ | T-21 | 文档：README、数据模型与流程说明、`compliance-risk.md`、`ai-usage.md` 定稿 | —（交付物 2、3、6） | T-20 | 2.5h（实际 ≈1.5h） | M6 |
 | ☑ | T-22 | 演示脚本 `docs/demo-script.md`、彩排 ×2、全新目录克隆验证、提交 | —（交付物 7） | T-21 | 2.0h（实际 ≈2.0h） | M6 |
+| ☑ | T-23 | 管理页可用性：全站中文文案与术语释义、每页引导与关键操作后的下一步、任务状态说明；同步修订 `admin-ui.md`（AC-UI-012~014）与 UI 检查清单 | UI-012, UI-013, UI-014 | T-18, T-22 | 1.5h（实际 ≈1.2h） | M6 |
 
-合计约 **31.5 小时**。未排期的 P2：`LEAD-014`、`POOL-007`、`POOL-008`、`COMP-014`、`CAMP-028`。
+合计约 **33.0 小时**。未排期的 P2：`LEAD-014`、`POOL-007`、`POOL-008`、`COMP-014`、`CAMP-028`。
 
 ## 通用约定（每个任务都适用）
 
@@ -54,3 +55,4 @@
 - **T-10**：AC-SYS-003 的期望路径清单 = `04-api-contract.md` 中全部非 P2 的 `/api/v1` 端点 + `/healthz`；`WhatsAppCloudStub` 只返回 `501 PROVIDER_NOT_ENABLED`，不建立任何网络路径。
 - **T-11**：AC-SYS-006 的 `MESSENGER_PROVIDER=whatsapp_cloud` 前置检查在 `POST /campaigns/{id}/start` 返回 `501 PROVIDER_NOT_ENABLED`；检查顺序按 Q-11（模板 APPROVED → 非终态明细 → Provider 可用），失败时任务状态不变。
 - **T-19**：权重调整后须同步更新 `screening.md` §6 与 `05-mock-data.md` §6.1，并记入 `CHANGELOG.md`；`mock_leads.json` 有 24 条 `expected_label=relevant`（A 类 20 + E 类 4），E 类 4 行是重复行、导入后不产生 lead，Precision/Recall 必须按「导入后的 lead」计算（relevant 分母 20），E/F 行跳过。另：`05-mock-data.md` §6 要求的 `mock_blacklist.csv` 黑名单导入至今未实现（seed 与 `/demo/reset` 都未导入），需在本任务补上并加测试（已随 T-19 完成，CHANGELOG v1.8）。
+- **T-23**：文案字典集中在 `app.js` 顶部（`*_LABELS` / `TASK_STATUS_GUIDE`）；新增状态、原因码、审计动作、对象类型或设置键时，必须同时补中文名与一句话释义。AC-UI-012~014 由静态检查测试兜底；界面观感、引导顺序与真实交互仍需按 `docs/ui-checklist.md` 在浏览器中人工走查。
