@@ -9,10 +9,16 @@ from sqlalchemy.orm import Session
 from app.core.clock import FakeClock
 from app.core.config import Settings
 from app.main import create_app
-from app.models import Keyword, RateRule, SystemSetting, Template
+from app.models import Keyword, RateRule, Suppression, SystemSetting, Template
 from app.services.seed_service import seed_defaults
 
-EXPECTED = {"settings": 26, "keywords": 25, "rate_rules": 2, "templates": 1}
+EXPECTED = {
+    "settings": 26,
+    "keywords": 25,
+    "rate_rules": 2,
+    "templates": 1,
+    "suppressions": 0,
+}
 
 EXPECTED_KEYWORDS = {
     ("美容仪", "POSITIVE", 30),
@@ -60,11 +66,15 @@ def _counts(db: Engine) -> dict[str, int]:
         keywords = session.scalar(select(func.count()).select_from(Keyword)) or 0
         rules = session.scalar(select(func.count()).select_from(RateRule)) or 0
         templates = session.scalar(select(func.count()).select_from(Template)) or 0
+        suppressions = (
+            session.scalar(select(func.count()).select_from(Suppression)) or 0
+        )
     return {
         "settings": settings,
         "keywords": keywords,
         "rate_rules": rules,
         "templates": templates,
+        "suppressions": suppressions,
     }
 
 
@@ -79,7 +89,13 @@ def test_AC_CFG_006_seed_is_complete_and_idempotent(
 
     with Session(db) as session:
         second = seed_defaults(session, clock)
-    assert second == {"settings": 0, "keywords": 0, "rate_rules": 0, "templates": 0}
+    assert second == {
+        "settings": 0,
+        "keywords": 0,
+        "rate_rules": 0,
+        "templates": 0,
+        "suppressions": 0,
+    }
     assert _counts(db) == EXPECTED
 
     with Session(db) as session:

@@ -7,6 +7,7 @@ import argparse
 from app.core.clock import SystemClock
 from app.core.config import load_settings
 from app.core.db import build_engine, build_session_factory
+from app.core.security import PhoneCipher
 from app.models import Base, create_schema
 from app.services.seed_service import seed_defaults
 
@@ -22,8 +23,9 @@ def main() -> int:
     if args.reset:
         Base.metadata.drop_all(engine)
     create_schema(engine)
+    cipher = PhoneCipher(settings.phone_enc_key, settings.phone_hash_key)
     with build_session_factory(engine)() as session:
-        counts = seed_defaults(session, SystemClock())
+        counts = seed_defaults(session, SystemClock(), cipher=cipher)
     engine.dispose()
     summary = ", ".join(f"{name}={count}" for name, count in counts.items())
     print(f"seed complete: {summary}")

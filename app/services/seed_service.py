@@ -2,12 +2,21 @@
 
 from __future__ import annotations
 
+import csv
+from pathlib import Path
+
 from sqlalchemy.orm import Session
 
 from app.core.clock import Clock
+from app.core.security import PhoneCipher
+from app.domain.lead import normalize_username
+from app.domain.masking import mask_phone
 from app.domain.normalize import normalize_text
+from app.domain.phone import normalize_phone
 from app.domain.settings import default_settings
-from app.repositories import config_repo, template_repo
+from app.repositories import config_repo, suppression_repo, template_repo
+
+BLACKLIST_CSV = Path(__file__).resolve().parents[2] / "data" / "mock_blacklist.csv"
 
 DEFAULT_KEYWORDS: tuple[tuple[str, str, int], ...] = (
     ("美容仪", "POSITIVE", 30),
@@ -54,10 +63,12 @@ def database_is_empty(session: Session) -> bool:
     return config_repo.is_empty(session)
 
 
-def seed_defaults(session: Session, clock: Clock) -> dict[str, int]:
+def seed_defaults(
+    session: Session, clock: Clock, *, cipher: PhoneCipher | None = None
+) -> dict[str, int]:
     """Insert missing defaults and return created row counts per kind."""
     now = clock.now()
-    counts = {"settings": 0, "keywords": 0, "rate_rules": 0, "templates": 0}
+    counts = {"settings": 0, "keywords": 0, "rate_rules": 0, "templates": 0, "suppressions": 0}
 
     for key, value in default_settings().items():
         if config_repo.get_setting(session, key) is None:
@@ -109,5 +120,49 @@ def seed_defaults(session: Session, clock: Clock) -> dict[str, int]:
         )
         counts["templates"] += 1
 
+    if cipher is not None:
+        counts["suppressions"] = seed_blacklist(session, cipher, clock)
+
     session.commit()
     return counts
+
+
+def seed_blacklist(
+    session: Session, cipher: PhoneCipher, clock: Clock, *, path: Path = BLACKLIST_CSV
+) -> int:
+    """Import the mock blacklist / unsubscribe CSV idempotently; return new rows."""
+    if not path.exists():
+        return 0
+    now = clock.now()
+    created = 0
+    with path.open(newline="", encoding="utf-8") as handle:
+        for row in csv.DictReader(handle):
+            entry_type = (row.get("type") or "").strip().upper()
+            if entry_type not in {"BLACKLIST", "UNSUBSCRIBE"}:
+                continue
+            phone = normalize_phone(row.get("phone"))
+            username = normalize_username(row.get("username") or "") or None
+            phone_hash = cipher.hash_phone(phone) if phone else None
+            if phone_hash is not None and suppression_repo.find_by_phone(
+                session, type=entry_type, phone_hash=phone_hash
+            ):
+                continue
+            if username is not None and suppression_repo.find_by_username(
+                session, type=entry_type, username=username
+            ):
+                continue
+            if phone_hash is None and username is None:
+                continue
+            suppression_repo.create_suppression(
+                session,
+                type=entry_type,
+                phone_hash=phone_hash,
+                phone_masked=mask_phone(phone) if phone else None,
+                username=username,
+                reason=(row.get("reason") or "").strip() or "seeded blacklist",
+                source="IMPORT",
+                created_at=now,
+                created_by="system:seed",
+            )
+            created += 1
+    return created

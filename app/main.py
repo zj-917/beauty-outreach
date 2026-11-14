@@ -49,7 +49,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     if app.state.settings.seed_defaults:
         with app.state.session_factory() as session:
             if database_is_empty(session):
-                seed_defaults(session, app.state.clock)
+                seed_defaults(
+                    session, app.state.clock, cipher=app.state.phone_cipher
+                )
     worker: Worker | None = app.state.worker
     thread: threading.Thread | None = None
     if worker is not None:

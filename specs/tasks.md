@@ -27,7 +27,7 @@
 | ☑ | T-16 | `send_log` 查询与任务时间线 | AUD-006, AUD-010 | T-12, T-03 | 1.0h（实际 ≈0.4h） | M4 |
 | ☑ | T-17 | 统计：任务统计、列表摘要、全局总览 | STAT-001~007 | T-13 | 0.5h（实际 ≈0.5h） | M4 |
 | ☑ | T-18 | 管理页（★ 项优先）+ `docs/ui-checklist.md` | UI-001~011 | T-14, T-16, T-17 | 3.0h（实际 ≈1.8h） | M5 |
-| ☐ | T-19 | `demo.py`、`eval_screening.py`；用评测结果微调权重 / 阈值并更新 spec | SYS-011, SCR-014 | T-14, T-06 | 1.0h | M5 |
+| ☑ | T-19 | `demo.py`、`eval_screening.py`；用评测结果微调权重 / 阈值并更新 spec | SYS-011, SCR-014 | T-14, T-06 | 1.0h（实际 ≈1.0h） | M5 |
 | ☐ | T-20 | 集成与 E2E 测试补齐（E2E-1~10）、泄漏扫描、冒烟测试、优雅关闭、`ac_coverage.py` | SYS-007, SYS-010, AUD-007（泄漏扫描部分） | 全部 | 1.5h | M5 |
 | ☐ | T-21 | 文档：README、数据模型与流程说明、`compliance-risk.md`、`ai-usage.md` 定稿 | —（交付物 2、3、6） | T-20 | 2.5h | M6 |
 | ☐ | T-22 | 演示脚本 `docs/demo-script.md`、彩排 ×2、全新目录克隆验证、提交 | —（交付物 7） | T-21 | 2.0h | M6 |
@@ -53,4 +53,4 @@
 - **T-18**：禁止 `innerHTML` 赋值；先做 ★ 页，配置页最后做。
 - **T-10**：AC-SYS-003 的期望路径清单 = `04-api-contract.md` 中全部非 P2 的 `/api/v1` 端点 + `/healthz`；`WhatsAppCloudStub` 只返回 `501 PROVIDER_NOT_ENABLED`，不建立任何网络路径。
 - **T-11**：AC-SYS-006 的 `MESSENGER_PROVIDER=whatsapp_cloud` 前置检查在 `POST /campaigns/{id}/start` 返回 `501 PROVIDER_NOT_ENABLED`；检查顺序按 Q-11（模板 APPROVED → 非终态明细 → Provider 可用），失败时任务状态不变。
-- **T-19**：权重调整后须同步更新 `screening.md` §6 与 `05-mock-data.md` §6.1，并记入 `CHANGELOG.md`；`mock_leads.json` 有 24 条 `expected_label=relevant`（A 类 20 + E 类 4），E 类 4 行是重复行、导入后不产生 lead，Precision/Recall 必须按「导入后的 lead」计算（relevant 分母 20），E/F 行跳过。另：`05-mock-data.md` §6 要求的 `mock_blacklist.csv` 黑名单导入至今未实现（seed 与 `/demo/reset` 都未导入），需在本任务补上并加测试。
+- **T-19**：权重调整后须同步更新 `screening.md` §6 与 `05-mock-data.md` §6.1，并记入 `CHANGELOG.md`；`mock_leads.json` 有 24 条 `expected_label=relevant`（A 类 20 + E 类 4），E 类 4 行是重复行、导入后不产生 lead，Precision/Recall 必须按「导入后的 lead」计算（relevant 分母 20），E/F 行跳过。另：`05-mock-data.md` §6 要求的 `mock_blacklist.csv` 黑名单导入至今未实现（seed 与 `/demo/reset` 都未导入），需在本任务补上并加测试（已随 T-19 完成，CHANGELOG v1.8）。

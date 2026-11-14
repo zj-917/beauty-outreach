@@ -1,6 +1,6 @@
 # 模块规格：screening（筛选与相关性评分）
 
-> 版本 v1.1 · 状态 定稿（2026-11-14 修订 Q-13/Q-14） · 依赖：`domain/scoring`、`config`（keyword / settings）、`audit`
+> 版本 v1.2 · 状态 定稿（2026-11-14 补 T-19 评测结论） · 依赖：`domain/scoring`、`config`（keyword / settings）、`audit`
 
 ## 1. 目标
 
@@ -77,6 +77,8 @@
 | `reseller` 25 · `giveaway` 20 · `follow4follow` 40 · `f4f` 40 | 营销 / 互关 |
 
 > 初始值依据 `05-mock-data.md` §6.1 的手算示例；最终以 `scripts/eval_screening.py` 评测结果为准微调，微调记入 `CHANGELOG.md`。
+>
+> **T-19 评测（2026-11-14）**：默认权重与阈值下 Precision = 1.00、Recall = 1.00、边缘带准确率 = 1.00，未做微调。
 
 ## 7. 验收标准
 

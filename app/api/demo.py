@@ -80,7 +80,7 @@ def demo_flush_receipts(request: Request) -> DemoFlushResponse:
 def demo_reset(request: Request) -> DemoResetResponse:
     """Drop every table, recreate the schema and reseed the defaults."""
     _require_token(request)
-    counts = DemoService(request.app.state.clock).reset(
-        request.app.state.engine, request.app.state.session_factory
-    )
+    counts = DemoService(
+        request.app.state.clock, request.app.state.phone_cipher
+    ).reset(request.app.state.engine, request.app.state.session_factory)
     return DemoResetResponse(status="reset", counts=counts)

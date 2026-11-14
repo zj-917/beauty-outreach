@@ -43,3 +43,4 @@
 | v1.5 | 2026-11-14 | Q-19 确认：新增 `PATCH /templates/{id}`（仅 DRAFT 可编辑）与审计动作 `TEMPLATE_UPDATED`；同步接口契约、模板规格与审计动作表 | T-08 实现评审确认草稿编辑路径与审计语义 | 04-api-contract.md、modules/template.md、modules/audit.md、CHANGELOG.md |
 | v1.6 | 2026-11-14 | Q-20 确认：池的 `delivery_readiness` 将 `INVALID_PHONE` 归入 `NO_PHONE`，发送闸门仍保留 `INVALID_PHONE` | T-09 实现评审确认池词表与闸门原因码的映射 | modules/pool.md、CHANGELOG.md |
 | v1.7 | 2026-11-14 | Q-21 确认：新增 `SKIPPED(RENDER_TOO_LONG)` 原因码，写入 TEMPLATE 闸门表与原因码注册表 | T-12 实现评审发现渲染超长时缺少原因码 | modules/campaign.md、CHANGELOG.md；T-12 测试 |
+| v1.8 | 2026-11-14 | T-19 评测结论：默认权重 / 阈值下 Precision 1.00、Recall 1.00、边缘带 1.00，**未调整**关键词权重与阈值；§7 的 `mock_blacklist.csv` 播种已实际接入 seed / 启动播种 / `/demo/reset`（此前仅提供文件） | 运行 `scripts/eval_screening.py` 后按 Q-7 记录评测结果；补齐 T-19 补充说明中登记的黑名单导入缺口 | 05-mock-data.md、modules/screening.md、CHANGELOG.md；scripts/eval_screening.py、scripts/demo.py、seed_service；T-19 测试 |
