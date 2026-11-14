@@ -274,6 +274,46 @@ def list_leads(
     return [_to_lead(row) for row in rows], total
 
 
+def list_for_screening(
+    session: Session,
+    *,
+    batch_id: int | None,
+    lead_ids: list[int] | None,
+) -> list[LeadEntry]:
+    """Return leads that machine scoring may (re)decide."""
+    conditions = [Lead.status.in_(("NEW", "PENDING_REVIEW", "DISCARDED"))]
+    if batch_id is not None:
+        conditions.append(Lead.batch_id == batch_id)
+    if lead_ids is not None:
+        conditions.append(Lead.id.in_(lead_ids))
+    rows = session.scalars(select(Lead).where(*conditions).order_by(Lead.id)).all()
+    return [_to_lead(row) for row in rows]
+
+
+def update_screening(
+    session: Session,
+    lead_id: int,
+    *,
+    score: int,
+    reasons: list[dict[str, Any]],
+    top_keyword: str | None,
+    status: str,
+    decision_source: str,
+    updated_at: datetime,
+) -> None:
+    """Store one lead's score, explanation and decision."""
+    row = session.get(Lead, lead_id)
+    if row is None:
+        return
+    row.score = score
+    row.score_reasons = reasons
+    row.top_keyword = top_keyword
+    row.status = status
+    row.decision_source = decision_source
+    row.updated_at = updated_at
+    session.flush()
+
+
 def find_consent(session: Session, phone_hash: str) -> ConsentEntry | None:
     """Return a consent record by phone hash."""
     row = session.scalar(
