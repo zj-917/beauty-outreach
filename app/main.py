@@ -20,6 +20,7 @@ from app.api.middleware import AdminAuthMiddleware, RequestContextMiddleware
 from app.api.pool import router as pool_router
 from app.api.screening import router as screening_router
 from app.api.send_log import router as send_log_router
+from app.api.stats import router as stats_router
 from app.api.system import router as system_router
 from app.api.template import router as template_router
 from app.api.webhook import router as webhook_router
@@ -116,6 +117,7 @@ def create_app(
     app.include_router(system_router)
     app.include_router(audit_router)
     app.include_router(send_log_router)
+    app.include_router(stats_router)
     app.include_router(campaign_router)
     app.include_router(config_router)
     app.include_router(compliance_router)

@@ -17,9 +17,7 @@ from app.repositories import audit_repo, campaign_repo, lead_repo, template_repo
 from app.repositories.audit_repo import AuditEntry
 from app.repositories.campaign_repo import CampaignEntry, ItemEntry
 from app.services.audit_service import AuditService
-
-_SUCCESS_STATUSES = ("SENT", "DELIVERED", "READ")
-_IN_PROGRESS_STATUSES = ("PENDING", "SENDING", "RETRY_WAIT")
+from app.services.stats_service import item_summary
 
 
 @dataclass(frozen=True)
@@ -117,7 +115,7 @@ class CampaignService:
         session.commit()
         return CampaignReport(
             campaign=campaign,
-            counts=_summary(len(targets), {"PENDING": len(targets)}),
+            counts=item_summary(len(targets), {"PENDING": len(targets)}),
         )
 
     def list_campaigns(
@@ -131,7 +129,7 @@ class CampaignService:
         reports = [
             CampaignReport(
                 campaign=entry,
-                counts=_summary(entry.total_items, counts[entry.id]),
+                counts=item_summary(entry.total_items, counts[entry.id]),
             )
             for entry in entries
         ]
@@ -142,7 +140,7 @@ class CampaignService:
         campaign = self._require(session, campaign_id)
         counts = campaign_repo.counts_for_tasks(session, [campaign.id])[campaign.id]
         return CampaignReport(
-            campaign=campaign, counts=_summary(campaign.total_items, counts)
+            campaign=campaign, counts=item_summary(campaign.total_items, counts)
         )
 
     def preview(self, session: Session, campaign_id: int) -> PreviewReport:
@@ -357,17 +355,3 @@ class CampaignService:
                 "VALIDATION_ERROR", "name must not be blank", details={"field": "name"}
             )
         return clean
-
-
-def _summary(total_items: int, by_status: dict[str, int]) -> dict[str, Any]:
-    """Build the CAMP-029 / STAT-007 summary block from per-status counts."""
-    return {
-        "total": total_items,
-        "success": sum(by_status.get(status, 0) for status in _SUCCESS_STATUSES),
-        "failed": by_status.get("FAILED", 0),
-        "skipped": by_status.get("SKIPPED", 0),
-        "in_progress": sum(
-            by_status.get(status, 0) for status in _IN_PROGRESS_STATUSES
-        ),
-        "by_status": dict(by_status),
-    }

@@ -20,7 +20,9 @@ from app.schemas.campaign import (
     CampaignView,
     TimelineEvent,
 )
+from app.schemas.stats import TaskStatsView
 from app.services.campaign_service import CampaignReport, CampaignService
+from app.services.stats_service import StatsService
 
 router = APIRouter(prefix="/api/v1/campaigns", tags=["campaigns"])
 
@@ -105,6 +107,17 @@ def get_campaign(
 ) -> CampaignView:
     """Return one campaign with its summary counts."""
     return _view(_service(request).get_campaign(session, campaign_id))
+
+
+@router.get("/{campaign_id}/stats", response_model=TaskStatsView)
+def campaign_stats(
+    request: Request,
+    campaign_id: int,
+    session: Annotated[Session, Depends(get_session)],
+) -> TaskStatsView:
+    """Return live result statistics computed in one read transaction."""
+    report = StatsService(request.app.state.clock).task_stats(session, campaign_id)
+    return TaskStatsView.model_validate(report)
 
 
 @router.get("/{campaign_id}/timeline", response_model=CampaignTimelineResponse)
