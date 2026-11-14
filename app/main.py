@@ -13,6 +13,7 @@ from app.api.audit import router as audit_router
 from app.api.campaign import router as campaign_router
 from app.api.compliance import router as compliance_router
 from app.api.config import router as config_router
+from app.api.demo import router as demo_router
 from app.api.errors import register_exception_handlers
 from app.api.lead import router as lead_router
 from app.api.middleware import AdminAuthMiddleware, RequestContextMiddleware
@@ -20,6 +21,7 @@ from app.api.pool import router as pool_router
 from app.api.screening import router as screening_router
 from app.api.system import router as system_router
 from app.api.template import router as template_router
+from app.api.webhook import router as webhook_router
 from app.core.clock import Clock, SystemClock
 from app.core.config import Settings, load_settings, validate_runtime_settings
 from app.core.db import build_engine, build_session_factory
@@ -31,6 +33,7 @@ from app.engine.worker import Worker
 from app.models import create_schema
 from app.providers.messenger import MockMessenger
 from app.services.audit_service import AuditService
+from app.services.receipt_service import ReceiptService
 from app.services.seed_service import database_is_empty, seed_defaults
 
 
@@ -90,12 +93,18 @@ def create_app(
             worker_id="worker-1",
             audit=app.state.audit_service,
         )
+        receipts = ReceiptService(
+            app.state.clock,
+            messenger=messenger,
+            session_factory=app.state.session_factory,
+        )
         worker = Worker(
             app.state.session_factory,
             app.state.clock,
             processor,
             worker_id="worker-1",
             tick_seconds=settings.tick_seconds,
+            receipts=receipts,
         )
     app.state.worker = worker
     app.state.worker_status = "running" if worker is not None else "disabled"
@@ -112,6 +121,9 @@ def create_app(
     app.include_router(screening_router)
     app.include_router(pool_router)
     app.include_router(template_router)
+    app.include_router(webhook_router)
+    if settings.demo_mode:
+        app.include_router(demo_router)
     return app
 
 

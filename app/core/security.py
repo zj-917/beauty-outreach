@@ -15,6 +15,19 @@ def verify_admin_token(provided: str | None, expected: str) -> bool:
     return hmac.compare_digest(provided, expected)
 
 
+def sign_webhook_payload(secret: str, raw: bytes) -> str:
+    """Return the ``sha256=<hex>`` signature over the raw request body."""
+    digest = hmac.new(secret.encode("utf-8"), raw, hashlib.sha256).hexdigest()
+    return f"sha256={digest}"
+
+
+def verify_webhook_signature(secret: str, raw: bytes, header: str | None) -> bool:
+    """Compare a webhook signature header against the raw body in constant time."""
+    if not header:
+        return False
+    return hmac.compare_digest(header, sign_webhook_payload(secret, raw))
+
+
 class PhoneCipher:
     """Encrypt and hash normalized phone numbers with configured keys."""
 

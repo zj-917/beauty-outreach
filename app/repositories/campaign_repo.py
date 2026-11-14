@@ -292,6 +292,22 @@ def get_item(session: Session, item_id: int) -> ItemEntry | None:
     return _to_item(row[0], row[1])
 
 
+def find_item_by_provider_message_id(
+    session: Session, provider_message_id: str
+) -> ItemEntry | None:
+    """Return the item a provider message id was written back to."""
+    row = session.execute(
+        select(TaskItem, Lead.username)
+        .join(Lead, Lead.id == TaskItem.lead_id)
+        .where(TaskItem.provider_message_id == provider_message_id)
+        .order_by(TaskItem.id.desc())
+        .limit(1)
+    ).first()
+    if row is None:
+        return None
+    return _to_item(row[0], row[1])
+
+
 def update_item(session: Session, item_id: int, **fields: Any) -> None:
     """Apply the given column changes to one item row."""
     row = session.get(TaskItem, item_id)

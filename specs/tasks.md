@@ -22,7 +22,7 @@
 | ☑ | T-11 | 任务创建（目标快照、幂等键）、状态机、控制接口（start/pause/resume/cancel 的状态层）、任务 / 明细查询 | CAMP-001~004, CAMP-027, CAMP-029 | T-07, T-08, T-09 | 1.5h（实际 ≈2.0h） | M3 |
 | ☑ | T-12 | 发送引擎 A：Worker、原子认领与租约、Processor、完整闸门链、全局 / 单收件人频控、`send_log` | CAMP-005, CAMP-010~014, CAMP-018, CAMP-025, COMP-004, COMP-007, TPL-005 | T-09, T-10, T-11 | 2.0h（实际 ≈2.3h） | M3 |
 | ☑ | T-13 | 发送引擎 B：失败分类、退避重试、超时、暂停 / 恢复 / 取消语义、租约回收与重启恢复、自动完成、配置实时生效 | CAMP-006~009, CAMP-015~017, CAMP-019, CAMP-023, CAMP-026, CFG-005 | T-12 | 2.0h（实际 ≈2.5h） | M3 |
-| ☐ | T-14 | 回执处理与 Webhook：状态回执、入站 STOP、签名校验、演示辅助端点 | CAMP-020, CAMP-021, COMP-006, SYS-009, SYS-012 | T-13 | 1.0h | M4 |
+| ☑ | T-14 | 回执处理与 Webhook：状态回执、入站 STOP、签名校验、演示辅助端点 | CAMP-020, CAMP-021, COMP-006, SYS-009, SYS-012 | T-13 | 1.0h（实际 ≈1.6h） | M4 |
 | ☐ | T-15 | 熔断与干跑预览 | CAMP-022, CAMP-024 | T-13 | 1.0h | M4 |
 | ☐ | T-16 | `send_log` 查询与任务时间线 | AUD-006, AUD-010 | T-12, T-03 | 1.0h | M4 |
 | ☐ | T-17 | 统计：任务统计、列表摘要、全局总览 | STAT-001~007 | T-13 | 0.5h | M4 |
@@ -53,4 +53,4 @@
 - **T-18**：禁止 `innerHTML` 赋值；先做 ★ 页，配置页最后做。
 - **T-10**：AC-SYS-003 的期望路径清单 = `04-api-contract.md` 中全部非 P2 的 `/api/v1` 端点 + `/healthz`；`WhatsAppCloudStub` 只返回 `501 PROVIDER_NOT_ENABLED`，不建立任何网络路径。
 - **T-11**：AC-SYS-006 的 `MESSENGER_PROVIDER=whatsapp_cloud` 前置检查在 `POST /campaigns/{id}/start` 返回 `501 PROVIDER_NOT_ENABLED`；检查顺序按 Q-11（模板 APPROVED → 非终态明细 → Provider 可用），失败时任务状态不变。
-- **T-19**：权重调整后须同步更新 `screening.md` §6 与 `05-mock-data.md` §6.1，并记入 `CHANGELOG.md`；`mock_leads.json` 有 24 条 `expected_label=relevant`（A 类 20 + E 类 4），E 类 4 行是重复行、导入后不产生 lead，Precision/Recall 必须按「导入后的 lead」计算（relevant 分母 20），E/F 行跳过。
+- **T-19**：权重调整后须同步更新 `screening.md` §6 与 `05-mock-data.md` §6.1，并记入 `CHANGELOG.md`；`mock_leads.json` 有 24 条 `expected_label=relevant`（A 类 20 + E 类 4），E 类 4 行是重复行、导入后不产生 lead，Precision/Recall 必须按「导入后的 lead」计算（relevant 分母 20），E/F 行跳过。另：`05-mock-data.md` §6 要求的 `mock_blacklist.csv` 黑名单导入至今未实现（seed 与 `/demo/reset` 都未导入），需在本任务补上并加测试。

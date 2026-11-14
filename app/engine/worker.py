@@ -9,6 +9,7 @@ from typing import Any
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.clock import Clock
+from app.core.receipts import ReceiptPoller
 from app.engine.processor import Processor
 from app.engine.runtime import load_runtime_settings
 from app.repositories import campaign_repo
@@ -27,12 +28,14 @@ class Worker:
         *,
         worker_id: str = "worker-1",
         tick_seconds: float = 1.0,
+        receipts: ReceiptPoller | None = None,
     ) -> None:
         self._session_factory = session_factory
         self._clock = clock
         self._processor = processor
         self.worker_id = worker_id
         self._tick_seconds = tick_seconds
+        self._receipts = receipts
         self._stop = threading.Event()
 
     def tick(self) -> int:
@@ -67,6 +70,11 @@ class Worker:
                     logger.exception(
                         "worker completion check failed task_id=%s", task_id
                     )
+        if self._receipts is not None:
+            try:
+                self._receipts.poll_and_apply()
+            except Exception:
+                logger.exception("worker receipt polling failed")
         return processed
 
     def claim(self, task_id: int) -> list[int]:

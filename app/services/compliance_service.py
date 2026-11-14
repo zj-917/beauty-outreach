@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from typing import Any
 
@@ -29,6 +30,8 @@ from app.services.config_service import ConfigService
 
 _CONSENT_STATUSES = frozenset({"GRANTED", "REVOKED"})
 _SUPPRESSION_TYPES = frozenset({"BLACKLIST", "UNSUBSCRIBE"})
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -331,6 +334,76 @@ class ComplianceService:
         """Return True when an inbound text is exactly a configured stop keyword."""
         values = self.settings(session)
         return matches_stop_keyword(text, values["compliance.stop_keywords"])
+
+    def handle_inbound(
+        self,
+        session: Session,
+        *,
+        from_phone: str,
+        text: str,
+        request_id: str | None = None,
+    ) -> str:
+        """Register an inbound STOP: unsubscribe, revoke consent, audit, one transaction."""
+        normalized = normalize_phone(from_phone)
+        if normalized is None:
+            logger.warning("inbound message ignored: invalid phone format")
+            return "IGNORED"
+        values = self.settings(session)
+        if not matches_stop_keyword(text, values["compliance.stop_keywords"]):
+            return "IGNORED"
+        now = self._clock.now()
+        phone_hash = self._cipher.hash_phone(normalized)
+        phone_masked = mask_phone(normalized)
+        consent = lead_repo.find_consent(session, phone_hash)
+        before_status = consent.status if consent is not None else None
+        suppression = suppression_repo.find_by_phone(
+            session, type="UNSUBSCRIBE", phone_hash=phone_hash
+        )
+        changed = False
+        if suppression is None:
+            suppression = suppression_repo.create_suppression(
+                session,
+                type="UNSUBSCRIBE",
+                phone_hash=phone_hash,
+                phone_masked=phone_masked,
+                username=None,
+                reason="Inbound STOP",
+                source="INBOUND_STOP",
+                created_at=now,
+                created_by="system:webhook",
+            )
+            changed = True
+        consent_status = before_status
+        if consent is not None and consent.status != "REVOKED":
+            lead_repo.update_consent(
+                session,
+                consent.id,
+                status="REVOKED",
+                source="INBOUND_STOP",
+                evidence_ref=consent.evidence_ref,
+                granted_at=None,
+                updated_at=now,
+                updated_by="system:webhook",
+            )
+            consent_status = "REVOKED"
+            changed = True
+        if changed:
+            self._audit.record(
+                session,
+                actor="system:webhook",
+                action="INBOUND_STOP_PROCESSED",
+                entity_type="suppression",
+                entity_id=str(suppression.id),
+                before={"consent_status": before_status},
+                after={
+                    "type": "UNSUBSCRIBE",
+                    "phone_masked": phone_masked,
+                    "consent_status": consent_status,
+                },
+                request_id=request_id,
+            )
+        session.commit()
+        return "UNSUBSCRIBED"
 
     def _phone_valid(self, lead: LeadEntry) -> bool:
         if lead.phone_enc is None:
