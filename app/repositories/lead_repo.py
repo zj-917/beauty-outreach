@@ -310,6 +310,29 @@ def list_all_pool(session: Session) -> list[LeadEntry]:
     return [_to_lead(row) for row in rows]
 
 
+def list_pool_targets(
+    session: Session,
+    *,
+    min_score: int | None,
+    batch_id: int | None,
+    lead_ids: list[int] | None,
+) -> list[LeadEntry]:
+    """Return APPROVED leads matching every given selection condition."""
+    conditions = [Lead.status == "APPROVED"]
+    if min_score is not None:
+        conditions.append(Lead.score >= min_score)
+    if batch_id is not None:
+        conditions.append(Lead.batch_id == batch_id)
+    if lead_ids is not None:
+        conditions.append(Lead.id.in_(lead_ids))
+    rows = session.scalars(
+        select(Lead)
+        .where(*conditions)
+        .order_by(Lead.score.is_(None), Lead.score.desc(), Lead.id)
+    ).all()
+    return [_to_lead(row) for row in rows]
+
+
 def update_review(
     session: Session,
     lead_id: int,

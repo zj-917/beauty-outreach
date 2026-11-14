@@ -9,6 +9,7 @@ from fastapi import FastAPI
 
 from app import APP_VERSION
 from app.api.audit import router as audit_router
+from app.api.campaign import router as campaign_router
 from app.api.compliance import router as compliance_router
 from app.api.config import router as config_router
 from app.api.errors import register_exception_handlers
@@ -71,6 +72,7 @@ def create_app(
     app.add_middleware(RequestContextMiddleware)
     app.include_router(system_router)
     app.include_router(audit_router)
+    app.include_router(campaign_router)
     app.include_router(config_router)
     app.include_router(compliance_router)
     app.include_router(lead_router)
