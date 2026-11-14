@@ -10,7 +10,9 @@ from sqlalchemy.orm import Session
 
 from app.core.clock import Clock
 from app.core.errors import AppError
+from app.core.security import PhoneCipher
 from app.domain.state import Transition, transition
+from app.engine.preview import Previewer, PreviewReport
 from app.repositories import campaign_repo, lead_repo, template_repo
 from app.repositories.campaign_repo import CampaignEntry, ItemEntry
 from app.services.audit_service import AuditService
@@ -30,8 +32,11 @@ class CampaignReport:
 class CampaignService:
     """Create snapshot campaigns and drive their state machine."""
 
-    def __init__(self, clock: Clock, audit: AuditService | None = None) -> None:
+    def __init__(
+        self, clock: Clock, cipher: PhoneCipher, audit: AuditService | None = None
+    ) -> None:
         self._clock = clock
+        self._cipher = cipher
         self._audit = audit or AuditService(clock)
 
     def create(
@@ -138,6 +143,11 @@ class CampaignService:
         return CampaignReport(
             campaign=campaign, counts=_summary(campaign.total_items, counts)
         )
+
+    def preview(self, session: Session, campaign_id: int) -> PreviewReport:
+        """Dry-run gates 1-7 for open items without any side effects."""
+        campaign = self._require(session, campaign_id)
+        return Previewer(self._clock, self._cipher).preview(session, campaign)
 
     def list_items(
         self,

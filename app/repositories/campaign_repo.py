@@ -318,6 +318,20 @@ def update_item(session: Session, item_id: int, **fields: Any) -> None:
     session.flush()
 
 
+def list_open_items(session: Session, campaign_id: int) -> list[ItemEntry]:
+    """Return every non-terminal item of a task with its lead username."""
+    rows = session.execute(
+        select(TaskItem, Lead.username)
+        .join(Lead, Lead.id == TaskItem.lead_id)
+        .where(
+            TaskItem.task_id == campaign_id,
+            TaskItem.status.in_(NON_TERMINAL_STATUSES),
+        )
+        .order_by(TaskItem.id)
+    ).all()
+    return [_to_item(row[0], row[1]) for row in rows]
+
+
 def list_items(
     session: Session,
     campaign_id: int,

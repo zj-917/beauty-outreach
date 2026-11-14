@@ -77,6 +77,17 @@ class CampaignControlResponse(BaseModel):
     status: str
 
 
+class CampaignPreviewResponse(BaseModel):
+    """Dry-run distribution of gates 1-7 over the open items."""
+
+    task_id: int
+    total_items: int
+    will_attempt: int
+    will_release: int
+    will_skip: dict[str, int]
+    note: str = "Rate-limit deferrals and quiet hours are not simulated"
+
+
 class CampaignItemView(BaseModel):
     """One task item; the full phone and rendered body are never exposed."""
 

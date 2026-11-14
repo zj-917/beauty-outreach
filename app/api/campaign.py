@@ -15,6 +15,7 @@ from app.schemas.campaign import (
     CampaignItemPage,
     CampaignItemView,
     CampaignPage,
+    CampaignPreviewResponse,
     CampaignView,
 )
 from app.services.campaign_service import CampaignReport, CampaignService
@@ -23,7 +24,11 @@ router = APIRouter(prefix="/api/v1/campaigns", tags=["campaigns"])
 
 
 def _service(request: Request) -> CampaignService:
-    return CampaignService(request.app.state.clock, request.app.state.audit_service)
+    return CampaignService(
+        request.app.state.clock,
+        request.app.state.phone_cipher,
+        request.app.state.audit_service,
+    )
 
 
 def _request_id(request: Request) -> str | None:
@@ -126,6 +131,23 @@ def list_campaign_items(
         total=total,
         page=page,
         page_size=page_size,
+    )
+
+
+@router.post("/{campaign_id}/preview", response_model=CampaignPreviewResponse)
+def preview_campaign(
+    request: Request,
+    campaign_id: int,
+    session: Annotated[Session, Depends(get_session)],
+) -> CampaignPreviewResponse:
+    """Dry-run gates 1-7 without writing logs, changing items or calling the provider."""
+    report = _service(request).preview(session, campaign_id)
+    return CampaignPreviewResponse(
+        task_id=report.task_id,
+        total_items=report.total_items,
+        will_attempt=report.will_attempt,
+        will_release=report.will_release,
+        will_skip=report.will_skip,
     )
 
 
