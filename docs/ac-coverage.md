@@ -19,6 +19,10 @@
 | AC-UI-012 | P1★ | `tests/unit/test_AC_UI_012_014_usability.py::test_AC_UI_012_all_enum_values_have_chinese_labels`<br>`tests/unit/test_AC_UI_012_014_usability.py::test_AC_UI_012_no_raw_english_interface_labels` | ✅ 已覆盖 |
 | AC-UI-013 | P1★ | `tests/unit/test_AC_UI_012_014_usability.py::test_AC_UI_013_every_page_has_guide_and_next_step` | ✅ 已覆盖 |
 | AC-UI-014 | P1★ | `tests/unit/test_AC_UI_012_014_usability.py::test_AC_UI_014_task_status_guidance_covers_all_states` | ✅ 已覆盖 |
+| AC-UI-015 | P1★ | `tests/unit/test_AC_UI_015_018_layout.py::test_AC_UI_015_batch_report_tabs` | ✅ 已覆盖 |
+| AC-UI-016 | P1★ | `tests/unit/test_AC_UI_015_018_layout.py::test_AC_UI_016_task_funnel_and_grouped_items` | ✅ 已覆盖 |
+| AC-UI-017 | P1 | `tests/unit/test_AC_UI_015_018_layout.py::test_AC_UI_017_pool_view_summary` | ✅ 已覆盖 |
+| AC-UI-018 | P1 | `tests/unit/test_AC_UI_015_018_layout.py::test_AC_UI_018_design_tokens_and_accordion` | ✅ 已覆盖 |
 | AC-AUD-001 | P0 | `tests/integration/test_AC_AUD_001_audit_record.py::test_AC_AUD_001_record_contains_all_fields`<br>`tests/unit/test_AC_AUD_001_operator.py::test_AC_AUD_001_operator_defaults_to_admin`<br>`tests/unit/test_AC_AUD_001_operator.py::test_AC_AUD_001_operator_uses_valid_header`<br>`tests/unit/test_AC_AUD_001_operator.py::test_AC_AUD_001_operator_rejects_invalid_value` | ✅ 已覆盖 |
 | AC-AUD-002 | P0 | `tests/e2e/test_e2e_10_audit_rollback.py::test_e2e_10_audit_failure_rolls_back_the_whole_import`<br>`tests/integration/test_AC_AUD_002_same_transaction.py::test_AC_AUD_002_record_does_not_commit`<br>`tests/integration/test_AC_AUD_002_same_transaction.py::test_AC_AUD_002_record_commits_with_caller` | ✅ 已覆盖 |
 | AC-AUD-003 | P0 | `tests/integration/test_AC_AUD_003_append_only.py::test_AC_AUD_003_update_is_rejected`<br>`tests/integration/test_AC_AUD_003_append_only.py::test_AC_AUD_003_delete_is_rejected` | ✅ 已覆盖 |
@@ -153,8 +157,8 @@
 
 ## 汇总
 
-- AC 总数：145
-- 已覆盖：132
+- AC 总数：149
+- 已覆盖：136
 - 未覆盖 P0：0
 - 未覆盖 P1：8（不阻断）
 - 未覆盖 P2：5（不排期）

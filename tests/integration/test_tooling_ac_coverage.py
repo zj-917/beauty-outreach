@@ -27,7 +27,8 @@ def test_ac_coverage_report_lists_every_ac_and_passes(tmp_path: Path) -> None:
     assert result.returncode == 0, result.stdout + result.stderr
 
     report = output.read_text(encoding="utf-8")
-    assert report.count("\n| AC-") == 145
+    # 149 = 142（v1.0 基线）+ 3（T-23 的 UI-012~014）+ 4（T-24 的 UI-015~018）
+    assert report.count("\n| AC-") == 149
     assert "| AC-SYS-007 | P0 |" in report
     assert "test_AC_SYS_007_fresh_startup_smoke_test_runs_lifespan" in report
     assert "| AC-SYS-010 | P1 |" in report

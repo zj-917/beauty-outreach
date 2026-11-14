@@ -86,56 +86,98 @@
         </div>
         <div class="guide" data-guide="leads">
           <p class="guide-title">本页要做什么</p>
-          <p class="guide-text">按顺序完成三步：① 导入示例线索 → ② 自动筛选打分 → ③ 人工审核「待人工确认」的线索。示例数据只在本机生成，不会访问真实平台。</p>
+          <p class="guide-text">按顺序完成三步：① 导入示例线索 → ② 自动筛选打分 → ③ 人工审核「待人工确认」的线索。已入池的名单可切到「用户池」子页签查看。示例数据只在本机生成，不会访问真实平台。</p>
           <p class="guide-next" id="leads-next">下一步：点击「导入示例线索」。</p>
         </div>
-        <div class="panel">
-          <div class="panel-head">
-            <h3>第 1–2 步 · 导入与自动筛选</h3>
-            <span class="muted">先导入，再筛选；筛选会按关键词和资料给线索打分并分档。</span>
-          </div>
-          <div class="row">
-            <button id="import-mock" type="button" class="primary" title="使用内置演示数据，不会访问真实平台">导入示例线索（Mock）</button>
-            <label class="field file-field">
-              <span>从文件导入（CSV / JSON）</span>
-              <input id="import-file" type="file" accept=".csv,.json">
-            </label>
-            <button id="import-file-btn" type="button">上传并导入</button>
-            <span class="spacer"></span>
-            <button id="run-screening" type="button" title="按关键词和资料给线索打分并分档">自动筛选（打分）</button>
-          </div>
-          <div id="import-report"></div>
+        <div class="row subnav" id="leads-subnav">
+          <button id="leads-tab-import" type="button" class="active">导入与筛选</button>
+          <button id="leads-tab-pool" type="button">用户池</button>
         </div>
-        <div class="panel">
-          <div class="panel-head">
-            <h3>第 3 步 · 人工审核</h3>
-            <span class="muted">只有「待人工确认」的线索可以审核；人工决定不会被自动评分覆盖。</span>
+
+        <div id="leads-import-view">
+          <div class="panel">
+            <div class="panel-head">
+              <h3>导入</h3>
+              <span class="muted">先导入，再筛选；筛选会按关键词和资料给线索打分并分档。</span>
+            </div>
+            <div class="row">
+              <button id="import-mock" type="button" class="primary" title="使用内置演示数据，不会访问真实平台">导入示例线索（Mock）</button>
+              <label class="field file-field">
+                <span>从文件导入（CSV / JSON）</span>
+                <input id="import-file" type="file" accept=".csv,.json">
+              </label>
+              <button id="import-file-btn" type="button">上传并导入</button>
+              <span class="spacer"></span>
+              <button id="run-screening" type="button" title="按关键词和资料给线索打分并分档">自动筛选（打分）</button>
+            </div>
           </div>
-          <div class="row filter-row">
-            <label class="field">
-              <span>状态</span>
-              <select id="lead-status">
-                <option value="">全部</option>
-                <option>NEW</option>
-                <option>PENDING_REVIEW</option>
-                <option>APPROVED</option>
-                <option>REJECTED</option>
-                <option>DISCARDED</option>
-              </select>
-            </label>
-            <label class="field"><span>最低分</span><input id="lead-min-score" type="number" min="0" max="100" size="4"></label>
-            <label class="field"><span>搜索</span><input id="lead-q" type="text" placeholder="用户名 / 显示名"></label>
-            <button id="lead-search" type="button" class="primary">查询</button>
-            <span class="spacer"></span>
-            <label class="field"><span>批量备注</span><input id="bulk-note" type="text" placeholder="可选"></label>
-            <button id="bulk-approve" type="button">批量通过</button>
-            <button id="bulk-reject" type="button">批量拒绝</button>
+
+          <div class="panel">
+            <div class="panel-head">
+              <h3>导入结果</h3>
+              <span class="muted">每次导入生成一张批次卡片；点标签页查看对应类别，历史批次在下方可展开。</span>
+            </div>
+            <div id="import-report"></div>
+            <div id="batch-history"></div>
           </div>
-          <div id="lead-results" class="table-host"></div>
-          <div class="pager">
-            <button id="lead-prev" type="button">上一页</button>
-            <span id="lead-page-info" class="muted"></span>
-            <button id="lead-next" type="button">下一页</button>
+
+          <div class="panel">
+            <div class="panel-head">
+              <h3>筛选结果与人工审核</h3>
+              <span class="muted">只有「待人工确认」的线索可以审核；人工决定不会被自动评分覆盖。</span>
+            </div>
+            <div id="screening-cards" class="cards"></div>
+            <div id="screening-summary"></div>
+            <div class="row filter-row">
+              <label class="field"><span>最低分</span><input id="lead-min-score" type="number" min="0" max="100" size="4"></label>
+              <label class="field"><span>搜索</span><input id="lead-q" type="text" placeholder="用户名 / 显示名"></label>
+              <button id="lead-search" type="button" class="primary">查询</button>
+              <span class="spacer"></span>
+              <label class="field"><span>批量备注</span><input id="bulk-note" type="text" placeholder="可选"></label>
+              <button id="bulk-approve" type="button">批量通过</button>
+              <button id="bulk-reject" type="button">批量拒绝</button>
+            </div>
+            <div id="lead-results" class="table-host"></div>
+            <div class="pager">
+              <button id="lead-prev" type="button">上一页</button>
+              <span id="lead-page-info" class="muted"></span>
+              <button id="lead-next" type="button">下一页</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="leads-pool-view" class="hidden">
+          <div class="panel">
+            <div class="panel-head">
+              <h3>用户池摘要</h3>
+              <span class="muted">已入池 = 可进入发送任务；可触达 = 有号码、已授权且不在黑名单 / 退订。</span>
+            </div>
+            <div id="pool-kpi" class="cards"></div>
+            <div id="pool-dist-note"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head">
+              <h3>用户明细</h3>
+              <span class="muted">默认只显示主要列，点击行展开简介、号码与命中原因。</span>
+            </div>
+            <div class="row filter-row">
+              <label class="field">
+                <span>视图</span>
+                <select id="pool-view">
+                  <option value="pool">已入池</option>
+                  <option value="pending">待人工确认</option>
+                  <option value="all">全部线索</option>
+                </select>
+              </label>
+              <label class="field"><span>搜索</span><input id="pool-q" type="text" placeholder="用户名 / 显示名"></label>
+              <button id="pool-search" type="button" class="primary">查询</button>
+            </div>
+            <div id="pool-table" class="table-host"></div>
+            <div class="pager">
+              <button id="pool-prev" type="button">上一页</button>
+              <span id="pool-page-info" class="muted"></span>
+              <button id="pool-next" type="button">下一页</button>
+            </div>
           </div>
         </div>
       </section>
@@ -261,11 +303,12 @@
         <div class="guide" data-guide="config">
           <p class="guide-title">本页要做什么</p>
           <p class="guide-text">四个部分：关键词决定线索评分；频控规则决定发送速度上限；模板决定消息内容；设置是其他运行参数。所有修改保存后立即生效。</p>
-          <p class="guide-next" id="config-next">下一步：如需修改，按各部分的说明操作；否则直接去「4 日志」查看演示记录。</p>
+          <p class="guide-next" id="config-next">下一步：如需修改，按各部分的说明操作；否则直接去「日志」查看演示记录。</p>
         </div>
         <div id="config-error" class="inline-error"></div>
-        <div class="panel">
-          <div class="panel-head"><h3>关键词</h3><span class="muted">决定线索评分：正向词加分，负向词减分</span></div>
+        <details class="config-group" open>
+          <summary>关键词 <span class="muted">决定线索评分：正向词加分，负向词减分</span></summary>
+          <div class="panel">
           <p class="panel-note">权重越大影响越强；关键词会在简介、用户名和显示名中匹配。</p>
           <div class="row">
             <label class="field">
@@ -283,45 +326,56 @@
             <button id="kw-add" type="button" class="primary">新增</button>
           </div>
           <div id="keyword-table" class="table-host"></div>
-        </div>
-        <div class="panel">
-          <div class="panel-head"><h3>频控规则</h3><span class="muted">决定发送速度上限</span></div>
-          <p class="panel-note">所有启用的规则同时生效，取最严格的一条；系统要求至少保留一条全局规则和一条单收件人规则。</p>
-          <div class="row">
-            <label class="field">
-              <span>名称</span>
-              <input id="rr-name" type="text" placeholder="如：global_default">
-            </label>
-            <label class="field">
-              <span>范围</span>
-              <select id="rr-scope"><option>GLOBAL</option><option>PER_RECIPIENT</option></select>
-            </label>
-            <label class="field"><span>窗口（秒）</span><input id="rr-window" type="number" value="10" size="5"></label>
-            <label class="field"><span>上限（次）</span><input id="rr-max" type="number" value="5" size="4"></label>
-            <button id="rr-add" type="button" class="primary">新增</button>
           </div>
-          <div id="rate-table" class="table-host"></div>
-        </div>
-        <div class="panel">
-          <div class="panel-head"><h3>消息模板</h3><span class="muted">决定发送的消息内容</span></div>
-          <p class="panel-note">新建后是草稿，点「审核通过」后才能用于任务；已审核的正文不能直接修改，要改请点「创建新版本」。</p>
-          <div class="row">
-            <label class="field"><span>名称</span><input id="tpl-name" type="text" placeholder="如：greeting"></label>
-            <label class="field"><span>语言</span><input id="tpl-language" type="text" value="en" size="5"></label>
-            <label class="field grow">
-              <span>正文（可用 {{username}} 等占位符）</span>
-              <textarea id="tpl-body" rows="2" placeholder="Hi {{username}}, ..."></textarea>
-            </label>
-            <button id="tpl-create" type="button">新建模板</button>
+        </details>
+        <details class="config-group">
+          <summary>消息模板 <span class="muted">决定发送的消息内容</span></summary>
+          <div class="panel">
+            <p class="panel-note">新建后是草稿，点「审核通过」后才能用于任务；已审核的正文不能直接修改，要改请点「创建新版本」。</p>
+            <div class="row">
+              <label class="field"><span>名称</span><input id="tpl-name" type="text" placeholder="如：greeting"></label>
+              <label class="field"><span>语言</span><input id="tpl-language" type="text" value="en" size="5"></label>
+              <label class="field grow">
+                <span>正文（可用 {{username}} 等占位符）</span>
+                <textarea id="tpl-body" rows="2" placeholder="Hi {{username}}, ..."></textarea>
+              </label>
+              <button id="tpl-create" type="button">新建模板</button>
+            </div>
+            <div id="template-table" class="table-host"></div>
+            <div id="template-preview" class="muted"></div>
           </div>
-          <div id="template-table" class="table-host"></div>
-          <div id="template-preview" class="muted"></div>
-        </div>
-        <div class="panel">
-          <div class="panel-head"><h3>设置</h3><span class="muted">其他运行参数</span><button id="settings-save" type="button" class="primary">保存设置</button></div>
-          <p class="panel-note">每个字段先显示中文名和用途，括号内是系统字段名；修改后点「保存设置」立即生效。</p>
-          <div id="settings-form" class="settings-grid"></div>
-        </div>
+        </details>
+        <details class="config-group">
+          <summary>频控规则 <span class="muted">决定发送速度上限</span></summary>
+          <div class="panel">
+            <p class="panel-note">所有启用的规则同时生效，取最严格的一条；系统要求至少保留一条全局规则和一条单收件人规则。</p>
+            <div class="row">
+              <label class="field">
+                <span>名称</span>
+                <input id="rr-name" type="text" placeholder="如：global_default">
+              </label>
+              <label class="field">
+                <span>范围</span>
+                <select id="rr-scope"><option>GLOBAL</option><option>PER_RECIPIENT</option></select>
+              </label>
+              <label class="field"><span>窗口（秒）</span><input id="rr-window" type="number" value="10" size="5"></label>
+              <label class="field"><span>上限（次）</span><input id="rr-max" type="number" value="5" size="4"></label>
+              <button id="rr-add" type="button" class="primary">新增</button>
+            </div>
+            <div id="rate-table" class="table-host"></div>
+          </div>
+        </details>
+        <details class="config-group">
+          <summary>设置 <span class="muted">其他运行参数，修改后立即生效</span></summary>
+          <div class="panel">
+            <p class="panel-note">每个字段先显示中文名和用途，括号内是系统字段名；修改后点「保存设置」立即生效。</p>
+            <div id="settings-form" class="settings-grid"></div>
+            <div class="row">
+              <span class="spacer"></span>
+              <button id="settings-save" type="button" class="primary">保存设置</button>
+            </div>
+          </div>
+        </details>
       </section>
 
       <section id="page-logs" class="page hidden">
@@ -399,6 +453,12 @@
   </div>
 </div>
 
+<script src="labels.js"></script>
+<script src="core.js"></script>
+<script src="pages-overview.js"></script>
+<script src="pages-leads.js"></script>
+<script src="pages-tasks.js"></script>
+<script src="pages-system.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

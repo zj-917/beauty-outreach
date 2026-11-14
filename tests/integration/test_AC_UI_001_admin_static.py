@@ -18,6 +18,12 @@ def test_AC_UI_001_admin_page_and_assets_are_served_without_external_resources(
         assert label in page.text
 
     for name, content_type in (
+        ("labels.js", "javascript"),
+        ("core.js", "javascript"),
+        ("pages-overview.js", "javascript"),
+        ("pages-leads.js", "javascript"),
+        ("pages-tasks.js", "javascript"),
+        ("pages-system.js", "javascript"),
         ("app.js", "javascript"),
         ("style.css", "text/css"),
     ):

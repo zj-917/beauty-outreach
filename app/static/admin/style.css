@@ -16,6 +16,9 @@
   --accent-strong: #414c63;
   --accent-soft: #eef0f4;
 
+  --info: #4f6b8f;
+  --info-soft: #e9eef5;
+
   --ok: #476a56;
   --ok-soft: #eaf1ec;
 
@@ -677,8 +680,8 @@ td input {
 }
 
 .badge.RUNNING {
-  background: var(--ok-soft);
-  color: var(--ok);
+  background: var(--info-soft);
+  color: var(--info);
 }
 
 .badge.PAUSED {
@@ -871,6 +874,246 @@ td input {
 
 .small {
   font-size: 11.5px;
+}
+
+/* ---------- v1.2 layout components ---------- */
+
+/* 线索页子页签 / 明细分组标签页 / 批次结果标签页 */
+.tabbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.tabbar button {
+  height: 30px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+}
+
+.tabbar button.active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+
+/* 批次结果卡片 */
+.batch-card {
+  margin-bottom: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface-quiet);
+}
+
+.batch-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.batch-counts strong,
+.batch-card-head strong {
+  font-size: 13px;
+}
+
+/* 展开明细行（渐进披露） */
+.expand-row td {
+  background: var(--surface-quiet);
+  border-bottom: 1px solid var(--line);
+}
+
+.expand-detail p {
+  margin-bottom: 4px;
+  color: var(--ink-2);
+  font-size: 12px;
+}
+
+/* 任务列表卡片流 */
+.task-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.task-card {
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  box-shadow: var(--shadow-quiet);
+}
+
+.task-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.task-card .button,
+.task-card button {
+  margin-top: 8px;
+}
+
+/* 进度条（状态横幅 / 任务卡片） */
+.progress {
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: #ececea;
+  overflow: hidden;
+}
+
+.progress i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}
+
+.progress.large {
+  height: 9px;
+}
+
+.task-banner {
+  margin-bottom: 16px;
+}
+
+.task-banner .muted {
+  margin-top: 5px;
+}
+
+.banner-controls {
+  margin: 0;
+}
+
+.banner-controls button {
+  height: 30px;
+}
+
+/* 发送漏斗 */
+.funnel {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.funnel-seg {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  height: auto;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  text-align: left;
+}
+
+.funnel-seg:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.funnel-label {
+  color: var(--muted);
+  font-size: 11.5px;
+}
+
+.funnel-count {
+  font-size: 19px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.funnel-bar {
+  height: 5px;
+  border-radius: var(--radius-pill);
+  background: #ececea;
+  overflow: hidden;
+}
+
+.funnel-bar i {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+
+.funnel-seg.tone-muted .funnel-bar i {
+  background: var(--muted);
+}
+
+.funnel-seg.tone-danger .funnel-bar i {
+  background: var(--danger);
+}
+
+.funnel-seg.tone-danger .funnel-count {
+  color: var(--danger);
+}
+
+.funnel-detail {
+  margin-bottom: 14px;
+  color: var(--ink-2);
+  font-size: 12px;
+}
+
+.funnel-detail summary {
+  cursor: pointer;
+  color: var(--accent-strong);
+  font-weight: 500;
+}
+
+/* 配置页折叠手风琴 */
+details.config-group {
+  margin-bottom: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+}
+
+details.config-group > summary {
+  padding: 13px 18px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+details.config-group > summary::-webkit-details-marker {
+  display: none;
+}
+
+details.config-group > summary::before {
+  content: "▸";
+  color: var(--muted);
+  transition: transform 0.15s ease;
+}
+
+details.config-group[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+details.config-group > summary:hover {
+  color: var(--accent-strong);
+}
+
+details.config-group > .panel {
+  margin: 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
 }
 
 /* ---------- responsive ---------- */

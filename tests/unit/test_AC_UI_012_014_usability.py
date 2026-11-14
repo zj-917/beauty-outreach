@@ -11,8 +11,18 @@ import re
 from pathlib import Path
 
 ADMIN_DIR = Path(__file__).resolve().parents[2] / "app" / "static" / "admin"
-APP_JS = ADMIN_DIR / "app.js"
 INDEX_HTML = ADMIN_DIR / "index.html"
+
+# app.js 已按页面 / 职责拆分为多个静态文件（spec v1.2 §6），检查时按加载顺序合并读取。
+JS_FILES = [
+    "labels.js",
+    "core.js",
+    "pages-overview.js",
+    "pages-leads.js",
+    "pages-tasks.js",
+    "pages-system.js",
+    "app.js",
+]
 
 CJK_RE = re.compile(r"[一-鿿]")
 ENTRY_RE = re.compile(
@@ -173,8 +183,10 @@ SETTING_KEYS = [
 
 
 def read_js() -> str:
-    """Return the admin script source."""
-    return APP_JS.read_text(encoding="utf-8")
+    """Return all admin script sources concatenated in load order."""
+    return "\n".join(
+        (ADMIN_DIR / name).read_text(encoding="utf-8") for name in JS_FILES
+    )
 
 
 def read_html() -> str:
