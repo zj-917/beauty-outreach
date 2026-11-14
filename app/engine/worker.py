@@ -51,7 +51,11 @@ class Worker:
             task_ids = campaign_repo.list_running_task_ids(session)
             session.commit()
         for task_id in task_ids:
+            if self._stop.is_set():
+                break
             for item_id in self.claim(task_id):
+                if self._stop.is_set():
+                    break
                 with self._session_factory() as session:
                     try:
                         self._processor.process(session, item_id)
@@ -102,5 +106,5 @@ class Worker:
             self._stop.wait(self._tick_seconds)
 
     def stop(self) -> None:
-        """Ask the loop to exit after the current tick."""
+        """Ask the loop to exit after the current item; leases cover the rest."""
         self._stop.set()

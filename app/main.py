@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import threading
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -41,6 +42,7 @@ from app.services.receipt_service import ReceiptService
 from app.services.seed_service import database_is_empty, seed_defaults
 
 ADMIN_STATIC_DIR = Path(__file__).resolve().parent / "static" / "admin"
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -59,10 +61,15 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             target=worker.run_forever, name="outreach-worker", daemon=True
         )
         thread.start()
+    app.state.worker_thread = thread
     yield
     if worker is not None and thread is not None:
         worker.stop()
         thread.join(timeout=5)
+        app.state.worker_status = "stopped"
+        if thread.is_alive():
+            app.state.worker_status = "stopping"
+            logger.warning("worker did not stop within 5 seconds; leases will recover")
     app.state.engine.dispose()
 
 
@@ -115,6 +122,7 @@ def create_app(
             receipts=receipts,
         )
     app.state.worker = worker
+    app.state.worker_thread = None
     app.state.worker_status = "running" if worker is not None else "disabled"
 
     register_exception_handlers(app)
