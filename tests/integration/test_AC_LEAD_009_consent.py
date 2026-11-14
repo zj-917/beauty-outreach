@@ -61,3 +61,30 @@ def test_AC_LEAD_009_consent_rows_are_upgraded_but_not_downgraded(
     updated = _consent(client, db, "+15555550141")
     assert updated is not None
     assert updated.status == "REVOKED"
+
+
+def test_AC_LEAD_009_repeat_grant_keeps_original_evidence(
+    client: TestClient, db: Engine
+) -> None:
+    """Given an existing GRANTED record, when granted again, then the first evidence stays."""
+    _import(client, "grant.one,+15555550144,GRANTED,web_form,form-first\n")
+    _import(client, "grant.two,+15555550144,GRANTED,web_form,form-second\n")
+    record = _consent(client, db, "+15555550144")
+    assert record is not None
+    assert record.status == "GRANTED"
+    assert record.evidence_ref == "form-first"
+
+
+def test_AC_LEAD_009_duplicate_phone_row_still_records_consent(
+    client: TestClient, db: Engine
+) -> None:
+    """Given a phone owned by another lead, then its valid consent is still recorded."""
+    _import(client, "owner.consent,+15555550145\n")
+    body = _import(
+        client,
+        "other.consent,+15555550145,GRANTED,web_form,form-dup\n",
+    )
+    assert (body["imported"], body["duplicates"]) == (0, 1)
+    record = _consent(client, db, "+15555550145")
+    assert record is not None
+    assert (record.status, record.evidence_ref) == ("GRANTED", "form-dup")

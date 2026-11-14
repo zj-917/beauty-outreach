@@ -13,7 +13,7 @@
 | ☑ | T-02 | 手机号与脱敏工具：规范化 / E.164、加密 / 哈希 / 掩码、`mask_phone`、`redact()`、日志过滤器 | AUD-007（单元部分）, AUD-008 | T-00 | 0.5h（实际 ≈0.5h） | M1 |
 | ☑ | T-03 | 审计服务：同事务写入、哈希链与校验、查询 API | AUD-001, AUD-002, AUD-004, AUD-005, AUD-011 | T-01, T-02 | 1.0h（实际 ≈0.8h） | M1 |
 | ☑ | T-04 | 配置管理与种子：关键词 / 频控 / 设置注册表 CRUD、环境变量启动校验、`seed.py` | CFG-001, CFG-002, CFG-003, CFG-004, CFG-006, CFG-007, CFG-008, SCR-011 | T-01, T-03 | 1.0h（实际 ≈1.8h） | M1 |
-| ☑ | T-05 | 线索导入：`LeadSource`（Mock / CsvJson / InstagramStub）、导入服务与 API、**`data/mock_leads.json` 与 `mock_blacklist.csv`（按 05 号文档）** | LEAD-001~013, LEAD-015 | T-02, T-03, T-04 | 2.0h（实际 ≈1.8h） | M1 |
+| ☑ | T-05 | 线索导入：`LeadSource`（Mock / CsvJson / InstagramStub）、导入服务与 API、**`data/mock_leads.json` 与 `mock_blacklist.csv`（按 05 号文档）** | LEAD-001~013, LEAD-015 | T-02, T-03, T-04 | 2.0h（实际 ≈2.2h） | M1 |
 | ☐ | T-06 | 评分引擎（`domain/scoring`）+ 筛选服务与 API | SCR-001~010, SCR-012, SCR-013, SCR-015 | T-04, T-05 | 1.5h | M2 |
 | ☐ | T-07 | 目标池与人工审核（单条 / 批量）、池查询 | POOL-001~005 | T-06 | 1.0h | M2 |
 | ☐ | T-08 | 模板服务：版本化、审核、变量白名单、渲染（`domain/render`）、预览 | TPL-001~004, TPL-006~009 | T-04 | 1.0h | M2 |

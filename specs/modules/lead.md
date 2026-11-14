@@ -1,6 +1,6 @@
 # 模块规格：lead（线索采集与清洗）
 
-> 版本 v1.0 · 状态 定稿（2026-11-13 冻结） · 依赖：`core/security`、`domain/normalize`、`domain/phone`、`audit`
+> 版本 v1.1 · 状态 定稿（2026-11-14 修订 Q-12） · 依赖：`core/security`、`domain/normalize`、`domain/phone`、`audit`
 
 ## 1. 目标
 
@@ -47,14 +47,15 @@ JSON 数组或 CSV（UTF-8，可含 BOM；CRLF / LF 均可）。必需列只有 
 **4.3 去重（先 username，后 phone_hash）**
 
 1. 规范化 username 已存在（批内或历史）→ 重复，**不新建**，计入 `duplicates`。
-   - 若新行带的号码与已存的号码不同 → 错误记录码 `IMPORT_CONFLICT`（保留原号码，不覆盖）；否则 `DUPLICATE_USERNAME`。
-   - 合并策略：**先写者优先**，仅把已存线索中**为空**的字段用新行补全（含此前缺失的号码与授权）。
-2. 否则若 `phone_hash` 已被**另一条线索**使用 → `DUPLICATE_PHONE`，计入 `duplicates`，不新建（一个收件人一条线索）。
+   - 若新行带的号码与已存的号码不同，或已存线索没有号码、而该号码已属于**另一条线索** → 错误记录码 `IMPORT_CONFLICT`（保留原号码 / 不补号码，不覆盖）；否则 `DUPLICATE_USERNAME`。
+   - 合并策略：**先写者优先**，仅把已存线索中**为空**的字段用新行补全（含此前缺失的、且未被其他线索占用的号码与授权）。
+2. 否则若 `phone_hash` 已被**另一条线索**使用 → `DUPLICATE_PHONE`，计入 `duplicates`，不新建（一个收件人一条线索）。该行携带的完整授权仍按 §4.4 应用（授权按 `phone_hash` 归属，不因未新建线索而丢失）。
 
 **4.4 手机号与授权入库**
 
 - `phone_enc`（Fernet）、`phone_hash`（HMAC-SHA256）、`phone_masked`；`DB` 中不得出现明文。
 - 行内 `consent_status`：`GRANTED`（含 source + evidence）→ upsert `contact_consent`；`REVOKED` → upsert REVOKED；其余情况忽略授权并计 warning `CONSENT_INCOMPLETE`。无授权字段 = 不写记录（即 UNKNOWN，不可发送）。
+- 授权按 `phone_hash` 归属，与是否新建线索无关：行合法且号码有效时，即使该行因 username 重复（`IMPORT_CONFLICT` 除外）或 `DUPLICATE_PHONE` 未新建线索，也按上一条规则 upsert。`IMPORT_CONFLICT` 行保留的是原号码，其新号码与本线索不一致，不应用授权。
 - 授权按 `phone_hash` 唯一；已存在记录的号码不被导入覆盖，除非新行是 `REVOKED`（撤销总是生效）。
 
 **4.5 原子性**：整个批次在**一个事务**内处理；行级错误不中断（记入报告），异常则整批回滚；成功后写一条 `LEAD_BATCH_IMPORTED` 审计。

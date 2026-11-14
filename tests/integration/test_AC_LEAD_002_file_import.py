@@ -42,6 +42,21 @@ def test_AC_LEAD_002_json_upload(client: TestClient) -> None:
     assert (body["imported"], body["source_type"]) == (2, "JSON")
 
 
+def test_AC_LEAD_002_quoted_csv_keeps_commas_and_newlines(client: TestClient) -> None:
+    """Given quoted commas and newlines, when parsed, then the bio is preserved."""
+    content = 'username,bio\nquote.one,"Beauty device, LED mask\nand more"\n'
+    assert _upload(client, "quoted.csv", content.encode()).status_code == 201
+    lead = client.get("/api/v1/leads", params={"q": "quote.one"}).json()["items"][0]
+    assert lead["bio"] == "Beauty device, LED mask\nand more"
+
+
+def test_AC_LEAD_002_unknown_source_is_rejected(client: TestClient) -> None:
+    """Given an unknown or missing source, when posted, then 422 is returned."""
+    for body in ({"source": "unknown"}, {"source": 5}, {}, []):
+        assert client.post("/api/v1/lead-batches/import", json=body).status_code == 422
+    assert client.get("/api/v1/lead-batches").json()["total"] == 0
+
+
 def test_AC_LEAD_002_bad_uploads_are_rejected(client: TestClient) -> None:
     """Given an empty, wrong-typed or username-less upload, when sent, then 422 is returned."""
     assert _upload(client, "leads.txt", b"username\nx\n").status_code == 422

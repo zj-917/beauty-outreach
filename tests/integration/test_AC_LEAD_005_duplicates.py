@@ -76,3 +76,28 @@ def test_AC_LEAD_006_conflicting_phone_keeps_original(client: TestClient) -> Non
     assert body["errors"][0]["code"] == "IMPORT_CONFLICT"
     lead = _lead(client, "conflict.user")
     assert lead["phone_masked"] == "+155****0131"
+
+
+def test_AC_LEAD_005_merge_never_steals_another_leads_phone(
+    client: TestClient,
+) -> None:
+    """Given a phone owned by another lead, when merging, then it is not copied."""
+    _import(client, "no.phone.lead,,,,,,,,\n" + "owner.lead,,,,,,+15555550161,,,\n")
+    body = _import(client, "no.phone.lead,,,,,,+15555550161,,,\n")
+    assert (body["imported"], body["duplicates"]) == (0, 1)
+    assert body["errors"][0]["code"] == "IMPORT_CONFLICT"
+    without_phone = _lead(client, "no.phone.lead")
+    assert without_phone["phone_masked"] is None
+    owner = _lead(client, "owner.lead")
+    assert owner["phone_masked"] == "+155****0161"
+
+
+def test_AC_LEAD_005_phone_formatting_does_not_create_a_second_lead(
+    client: TestClient,
+) -> None:
+    """Given the same number written differently, then the second row is a duplicate."""
+    _import(client, "format.one,,,,,,+1 555-555-0171,,,\n")
+    body = _import(client, "format.two,,,,,,+15555550171,,,\n")
+    assert (body["imported"], body["duplicates"]) == (0, 1)
+    assert body["errors"][0]["code"] == "DUPLICATE_PHONE"
+    assert client.get("/api/v1/leads").json()["total"] == 1

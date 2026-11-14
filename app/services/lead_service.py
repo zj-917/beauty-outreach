@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
@@ -33,6 +34,21 @@ from app.repositories.lead_repo import BatchEntry, LeadEntry
 from app.services.audit_service import AuditService
 
 _CONSENT_STATUSES = {"GRANTED", "REVOKED"}
+
+
+@dataclass(frozen=True)
+class _RowFields:
+    """Normalized fields of one accepted row."""
+
+    username: str
+    display_name: str | None
+    bio: str | None
+    region: str | None
+    language: str | None
+    source_url: str | None
+    phone: str | None
+    phone_hash: str | None
+    phone_masked: str | None
 
 
 class LeadService:
@@ -82,14 +98,7 @@ class LeadService:
         errors: list[dict[str, Any]] = []
         for index, row in enumerate(rows, start=1):
             self._process_row(
-                session,
-                batch_id,
-                index,
-                row,
-                counters,
-                errors,
-                operator,
-                now,
+                session, batch_id, index, row, counters, errors, operator, now
             )
         lead_repo.finish_batch(
             session,
@@ -179,10 +188,74 @@ class LeadService:
         operator: str,
         now: datetime,
     ) -> None:
+        fields = self._normalize_row(index, row, counters, errors)
+        if fields is None:
+            return
+        existing = lead_repo.find_lead_by_username(session, fields.username)
+        if existing is not None:
+            self._merge_duplicate(
+                session,
+                index,
+                row,
+                existing,
+                fields,
+                counters,
+                errors,
+                operator,
+                now,
+            )
+            return
+        owner = (
+            lead_repo.find_lead_by_phone_hash(session, fields.phone_hash)
+            if fields.phone_hash
+            else None
+        )
+        if owner is not None:
+            counters["duplicates"] += 1
+            errors.append(
+                {
+                    "row": index,
+                    "code": "DUPLICATE_PHONE",
+                    "detail": "phone is already used by another lead",
+                }
+            )
+            self._apply_consent(
+                session, index, row, fields, operator, now, counters, errors
+            )
+            return
+        lead_repo.create_lead(
+            session,
+            batch_id=batch_id,
+            username=fields.username,
+            display_name=fields.display_name,
+            bio=fields.bio,
+            region=fields.region,
+            language=fields.language,
+            source_url=fields.source_url,
+            phone_enc=self._cipher.encrypt(fields.phone) if fields.phone else None,
+            phone_hash=fields.phone_hash,
+            phone_masked=fields.phone_masked,
+            created_at=now,
+            updated_at=now,
+        )
+        counters["imported"] += 1
+        self._apply_consent(
+            session, index, row, fields, operator, now, counters, errors
+        )
+
+    def _normalize_row(
+        self,
+        index: int,
+        row: dict[str, Any],
+        counters: dict[str, int],
+        errors: list[dict[str, Any]],
+    ) -> _RowFields | None:
         username = normalize_username(row.get("username"))
         if not username:
-            self._reject(counters, errors, index, "MISSING_USERNAME", "username is empty")
-            return
+            self._reject(
+                counters, errors, index, "MISSING_USERNAME", "username is empty"
+            )
+            return None
         if not USERNAME_PATTERN.fullmatch(username):
             self._reject(
                 counters,
@@ -191,7 +264,7 @@ class LeadService:
                 "INVALID_USERNAME",
                 "username must be 1-30 characters of a-z, 0-9, dot or underscore",
             )
-            return
+            return None
         source_url, url_ok = normalize_source_url(row.get("source_url"))
         if not url_ok:
             self._reject(
@@ -201,17 +274,23 @@ class LeadService:
                 "INVALID_SOURCE_URL",
                 "source_url must be an https instagram.com link",
             )
-            return
+            return None
 
         region, region_ok = normalize_region(row.get("region"))
         language, language_ok = normalize_language(row.get("language"))
         raw_phone = str(row.get("phone") or "").strip()
         phone = normalize_phone(raw_phone) if raw_phone else None
         if not region_ok:
-            self._warn(counters, errors, index, "INVALID_REGION", "region is not ISO alpha-2")
+            self._warn(
+                counters, errors, index, "INVALID_REGION", "region is not ISO alpha-2"
+            )
         if not language_ok:
             self._warn(
-                counters, errors, index, "INVALID_LANGUAGE", "language is not a valid tag"
+                counters,
+                errors,
+                index,
+                "INVALID_LANGUAGE",
+                "language is not a valid tag",
             )
         if raw_phone and phone is None:
             self._warn(
@@ -221,61 +300,16 @@ class LeadService:
                 "INVALID_PHONE_DROPPED",
                 "phone is not E.164; lead kept without a phone",
             )
-
-        display_name = normalize_display_name(row.get("display_name"))
-        bio = normalize_bio(row.get("bio"))
-        phone_hash = self._cipher.hash_phone(phone) if phone else None
-        existing = lead_repo.find_lead_by_username(session, username)
-        if existing is not None:
-            self._merge_duplicate(
-                session,
-                index,
-                row,
-                existing,
-                phone,
-                phone_hash,
-                display_name,
-                bio,
-                region,
-                language,
-                source_url,
-                counters,
-                errors,
-                operator,
-                now,
-            )
-            return
-        if phone_hash is not None and lead_repo.find_lead_by_phone_hash(
-            session, phone_hash
-        ) is not None:
-            counters["duplicates"] += 1
-            errors.append(
-                {
-                    "row": index,
-                    "code": "DUPLICATE_PHONE",
-                    "detail": "phone is already used by another lead",
-                }
-            )
-            return
-        lead_repo.create_lead(
-            session,
-            batch_id=batch_id,
+        return _RowFields(
             username=username,
-            display_name=display_name,
-            bio=bio,
+            display_name=normalize_display_name(row.get("display_name")),
+            bio=normalize_bio(row.get("bio")),
             region=region,
             language=language,
             source_url=source_url,
-            phone_enc=self._cipher.encrypt(phone) if phone else None,
-            phone_hash=phone_hash,
+            phone=phone,
+            phone_hash=self._cipher.hash_phone(phone) if phone else None,
             phone_masked=mask_phone(phone) if phone else None,
-            created_at=now,
-            updated_at=now,
-        )
-        counters["imported"] += 1
-        self._apply_consent(
-            session, index, row, phone_hash, mask_phone(phone) if phone else None,
-            operator, now, counters, errors,
         )
 
     def _merge_duplicate(
@@ -284,54 +318,60 @@ class LeadService:
         index: int,
         row: dict[str, Any],
         existing: LeadEntry,
-        phone: str | None,
-        phone_hash: str | None,
-        display_name: str | None,
-        bio: str | None,
-        region: str | None,
-        language: str | None,
-        source_url: str | None,
+        fields: _RowFields,
         counters: dict[str, int],
         errors: list[dict[str, Any]],
         operator: str,
         now: datetime,
     ) -> None:
+        different_phone = bool(
+            existing.phone_hash
+            and fields.phone_hash
+            and existing.phone_hash != fields.phone_hash
+        )
+        other_owner = (
+            lead_repo.find_lead_by_phone_hash(session, fields.phone_hash)
+            if existing.phone_hash is None and fields.phone_hash
+            else None
+        )
+        conflict = different_phone or (
+            other_owner is not None and other_owner.id != existing.id
+        )
         counters["duplicates"] += 1
-        conflict = bool(
-            existing.phone_hash and phone_hash and existing.phone_hash != phone_hash
+        if different_phone:
+            detail = "existing lead keeps its original phone"
+        elif conflict:
+            detail = "phone already belongs to another lead; not copied"
+        else:
+            detail = "username already exists"
+        errors.append(
+            {
+                "row": index,
+                "code": "IMPORT_CONFLICT" if conflict else "DUPLICATE_USERNAME",
+                "detail": detail,
+            }
         )
-        code = "IMPORT_CONFLICT" if conflict else "DUPLICATE_USERNAME"
-        detail = (
-            "existing lead keeps its original phone"
-            if conflict
-            else "username already exists"
+        fill_phone = (
+            fields.phone
+            if fields.phone_hash and existing.phone_hash is None and not conflict
+            else None
         )
-        errors.append({"row": index, "code": code, "detail": detail})
-        fill_phone = phone if phone_hash and existing.phone_hash is None else None
         lead_repo.fill_missing_fields(
             session,
             existing.id,
-            display_name=display_name,
-            bio=bio,
-            region=region,
-            language=language,
-            source_url=source_url,
+            display_name=fields.display_name,
+            bio=fields.bio,
+            region=fields.region,
+            language=fields.language,
+            source_url=fields.source_url,
             phone_enc=self._cipher.encrypt(fill_phone) if fill_phone else None,
-            phone_hash=phone_hash if fill_phone else None,
-            phone_masked=mask_phone(fill_phone) if fill_phone else None,
+            phone_hash=fields.phone_hash if fill_phone else None,
+            phone_masked=fields.phone_masked if fill_phone else None,
             updated_at=now,
         )
         if not conflict:
             self._apply_consent(
-                session,
-                index,
-                row,
-                phone_hash,
-                mask_phone(phone) if phone else None,
-                operator,
-                now,
-                counters,
-                errors,
+                session, index, row, fields, operator, now, counters, errors
             )
 
     def _apply_consent(
@@ -339,8 +379,7 @@ class LeadService:
         session: Session,
         index: int,
         row: dict[str, Any],
-        phone_hash: str | None,
-        phone_masked: str | None,
+        fields: _RowFields,
         operator: str,
         now: datetime,
         counters: dict[str, int],
@@ -352,7 +391,7 @@ class LeadService:
         source = str(row.get("consent_source") or "").strip()
         evidence = str(row.get("consent_evidence") or "").strip() or None
         complete = (
-            phone_hash is not None
+            fields.phone_hash is not None
             and status in _CONSENT_STATUSES
             and (status == "REVOKED" or (source and evidence is not None))
         )
@@ -365,13 +404,13 @@ class LeadService:
                 "consent needs a valid phone, a known status and source plus evidence",
             )
             return
-        assert phone_hash is not None
-        existing = lead_repo.find_consent(session, phone_hash)
+        assert fields.phone_hash is not None
+        existing = lead_repo.find_consent(session, fields.phone_hash)
         if existing is None:
             lead_repo.create_consent(
                 session,
-                phone_hash=phone_hash,
-                phone_masked=phone_masked or "",
+                phone_hash=fields.phone_hash,
+                phone_masked=fields.phone_masked or "",
                 status=status,
                 source=source or "import",
                 evidence_ref=evidence,
