@@ -1,6 +1,6 @@
 # 模块规格：campaign（批量触达任务与发送引擎）
 
-> 版本 v1.0 · 状态 定稿（2026-11-13 冻结） · **这是评分权重最高的模块**
+> 版本 v1.1 · 状态 定稿（2026-11-14 修订 Q-21：新增 `RENDER_TOO_LONG` 原因码） · **这是评分权重最高的模块**
 > 依赖：template、compliance、pool、audit、`engine/*`、`providers/messenger/*`、`domain/{gates,backoff,state}`
 
 ## 1. 目标
@@ -46,7 +46,7 @@ Processor 对每条被认领的明细按**固定顺序**判定，**首个非放�
 | 2 | `SUPPRESSION` | Skip | 命中黑名单 / 退订 | `BLACKLISTED` / `UNSUBSCRIBED` |
 | 3 | `PHONE` | Skip | 无号码 / 号码非法 | `NO_PHONE` / `INVALID_PHONE` |
 | 4 | `CONSENT` | Skip | 无记录 / 已撤销 | `NO_CONSENT` / `CONSENT_REVOKED` |
-| 5 | `TEMPLATE` | Skip | 模板非 `APPROVED`；渲染失败 | `TEMPLATE_NOT_APPROVED` / `TEMPLATE_VARIABLE_MISSING` |
+| 5 | `TEMPLATE` | Skip | 模板非 `APPROVED`；渲染失败 | `TEMPLATE_NOT_APPROVED` / `TEMPLATE_VARIABLE_MISSING` / `RENDER_TOO_LONG` |
 | 6 | `DUPLICATE` | Skip | 同号码 + 同**模板名**已有 `ACCEPTED`（任一任务，排除本明细）；或本明细已有 `provider_message_id` | `ALREADY_CONTACTED` |
 | 7 | `RECIPIENT_FREQ` | Skip | 同号码在 `PER_RECIPIENT` 规则窗口内 `ACCEPTED` 次数 ≥ `max_count`（排除本明细） | `RECIPIENT_RATE_LIMITED` |
 | 8 | `QUIET_HOURS` | Defer | 处于静默时段 | `QUIET_HOURS` |
@@ -123,7 +123,7 @@ Processor 对每条被认领的明细按**固定顺序**判定，**首个非放�
 
 | 类别 | 原因码 |
 |---|---|
-| `SKIPPED` | `BLACKLISTED` `UNSUBSCRIBED` `NO_PHONE` `INVALID_PHONE` `NO_CONSENT` `CONSENT_REVOKED` `TEMPLATE_NOT_APPROVED` `TEMPLATE_VARIABLE_MISSING` `ALREADY_CONTACTED` `RECIPIENT_RATE_LIMITED` `TASK_CANCELLED` |
+| `SKIPPED` | `BLACKLISTED` `UNSUBSCRIBED` `NO_PHONE` `INVALID_PHONE` `NO_CONSENT` `CONSENT_REVOKED` `TEMPLATE_NOT_APPROVED` `TEMPLATE_VARIABLE_MISSING` `RENDER_TOO_LONG` `ALREADY_CONTACTED` `RECIPIENT_RATE_LIMITED` `TASK_CANCELLED` |
 | `FAILED` | `MAX_ATTEMPTS_EXCEEDED` `INVALID_NUMBER` `NOT_WHATSAPP_USER` `TEMPLATE_REJECTED` `AUTH_ERROR` `DELIVERY_FAILED` |
 | `DEFERRED`（仅 `send_log`） | `RATE_LIMIT_GLOBAL` `QUIET_HOURS` |
 | Provider `code` | `TIMEOUT` `NETWORK_ERROR` `SERVER_ERROR` `RATE_LIMITED` `INVALID_NUMBER` `NOT_WHATSAPP_USER` `TEMPLATE_REJECTED` `AUTH_ERROR` |

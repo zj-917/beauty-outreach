@@ -224,3 +224,30 @@ def test_AC_TPL_006_missing_variable_skips_without_messenger_calls(
         "TEMPLATE_VARIABLE_MISSING",
     )
     assert messenger.calls == 0
+
+
+def test_AC_CAMP_010_render_too_long_is_skipped(
+    client: TestClient,
+    db: Engine,
+    clock: FakeClock,
+    worker: Worker,
+    messenger: MockMessenger,
+    make_lead,
+) -> None:
+    """Given a render over 1024 chars, when ticking, then SKIPPED(RENDER_TOO_LONG)."""
+    _seed(client, db, clock)
+    lead_id = make_lead(
+        username="verbose", phone="+15555550162", display_name="A" * 60
+    )
+    template = client.post(
+        "/api/v1/templates",
+        json={"name": "verbose", "body": "{{name}} " * 60, "language": "en"},
+    ).json()
+    client.post(f"/api/v1/templates/{template['id']}/approve")
+    campaign_id = _campaign(client, template["id"], [lead_id])
+
+    worker.tick()
+
+    item = _items(client, campaign_id)[lead_id]
+    assert (item["status"], item["reason_code"]) == ("SKIPPED", "RENDER_TOO_LONG")
+    assert messenger.calls == 0
