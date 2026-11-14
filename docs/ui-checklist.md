@@ -23,7 +23,7 @@ python -m uvicorn app.main:app --reload
 - [ ] **AC-UI-003**：线索页「导入 Mock 数据」后，按状态 `PENDING_REVIEW` 与最低分过滤，列表只剩匹配项；可见分数、命中原因、脱敏号码、可触达预估；对单条填写备注后点「通过 / 拒绝」，列表即时刷新；勾选多条后「批量通过 / 批量拒绝」生效。
 - [ ] **AC-UI-004**：点「导入 Mock 数据」→ 显示批次报告（总数 / 导入 / 重复 / 无效 / 警告）；上传 `data/sample_leads.csv` 同样显示报告；若文件含错误行，错误列表以纯文本展示。
 - [ ] **AC-UI-005**：任务页选择已审核模板与最低分 → 点「创建并干跑预览」→ 显示 `将尝试 / 将释放 / 将跳过`；点「打开任务详情」进入详情。
-- [ ] **AC-UI-006**：任务详情按钮随状态启用：`DRAFT` 仅「启动」「取消」；`RUNNING` 仅「暂停」「取消」；`PAUSED` 仅「恢复」「取消」；`COMPLETED/CANCELLED` 全部禁用。`RUNNING` 时右上显示「每 2 秒自动刷新」，切走标签页后停止（Network 中不再轮询）。明细按 `status` / `reason_code` 过滤生效。熔断后 `pause_reason=CIRCUIT_OPEN` 显示醒目红色提示。
+- [ ] **AC-UI-006**：任务详情按钮随状态启用：`DRAFT` 仅「启动」「取消」；`RUNNING` 仅「暂停」「取消」；`PAUSED` 仅「恢复」「取消」；`COMPLETED/CANCELLED` 全部禁用。`RUNNING` 时右上显示「每 2 秒自动刷新」，切到左侧其它导航后停止（Network 中不再轮询）。明细按 `status` / `reason_code` 过滤生效。熔断后 `pause_reason=CIRCUIT_OPEN` 显示醒目红色提示。
 - [ ] **AC-UI-007**：合规页可见 consent 与 suppression 列表；填号码 + 原因「加入黑名单」成功；`DEMO_MODE=true` 时显示演示面板 → 填运行中任务某号码「模拟收到 STOP」→ 该任务明细后续处理变为 `SKIPPED`（原因 `UNSUBSCRIBED`）。「立即产出回执」后对应明细变为 `DELIVERED/READ`；「重置演示数据」清库并重新播种。
 - [ ] **AC-UI-008**：配置页可新增 / 改权重 / 启停 / 删除关键词；新增 / 删除频控规则（删除最后一条必需规则时页面就地显示后端错误码）；模板可新建、审核通过、停用、新版本、预览；设置表单可修改并保存，非法值就地显示错误且不改动其它设置。
 - [ ] **AC-UI-009**：日志页可查询审计日志（actor / action / entity_type / entity_id）与发送日志（task_id / item_id / phase / outcome / reason_code），均可翻页；所有号码列均为脱敏值；任务详情的「日志」按钮能带 `task_id/item_id` 跳到发送日志。

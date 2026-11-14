@@ -183,7 +183,10 @@ function saveAuth() {
 function switchPage(name) {
   stopPolling();
   document.querySelectorAll("#tabs button").forEach((item) => {
-    item.classList.toggle("active", item.dataset.page === name);
+    const active = item.dataset.page === name;
+    item.classList.toggle("active", active);
+    if (active) item.setAttribute("aria-current", "page");
+    else item.removeAttribute("aria-current");
   });
   ["overview", "leads", "tasks", "compliance", "config", "logs"].forEach((page) => {
     $("page-" + page).classList.toggle("hidden", page !== name);
@@ -452,7 +455,7 @@ async function createCampaign() {
         (skips.length ? skips.map(([code, count]) => code + "×" + count).join("，") : "无"),
     }),
     make("p", { class: "muted", text: preview.note }),
-    button("打开任务详情", () => showTaskDetail(campaign.id).catch(quiet))
+    button("打开任务详情", () => showTaskDetail(campaign.id).catch(quiet), "primary")
   );
 }
 
@@ -515,7 +518,7 @@ function renderTaskDetail(detail, stats) {
     ["耗时(s)", stats.elapsed_seconds === null ? "—" : stats.elapsed_seconds],
   ].map(([label, value]) => card(label, value));
   const nodes = [
-    make("div", { class: "row" }, [
+    make("div", { class: "detail-head" }, [
       make("h2", { text: "任务 #" + detail.id + " · " + detail.name }),
       make("span", { class: "badge " + detail.status, text: detail.status }),
     ]),
@@ -705,11 +708,14 @@ async function demoReset() {
 
 function configError(error) {
   const detail = error && error.detail;
-  $("config-error").textContent = detail ? detail.code + " · " + detail.message : "操作失败";
+  const box = $("config-error");
+  box.textContent = detail ? detail.code + " · " + detail.message : "操作失败";
+  box.classList.add("is-error");
 }
 
 async function loadConfig() {
   $("config-error").textContent = "";
+  $("config-error").classList.remove("is-error");
   const results = await Promise.all([
     api("/api/v1/keywords"),
     api("/api/v1/rate-rules"),
@@ -890,12 +896,14 @@ async function saveSettings() {
     if (JSON.stringify(value) !== JSON.stringify(state.settings[key])) payload[key] = value;
   });
   if (!Object.keys(payload).length) {
+    $("config-error").classList.remove("is-error");
     $("config-error").textContent = "没有修改。";
     return;
   }
   try {
     const updated = await api("/api/v1/settings", { method: "PUT", body: payload });
     renderSettings(updated);
+    $("config-error").classList.remove("is-error");
     $("config-error").textContent = "已保存。";
   } catch (error) {
     configError(error);
@@ -907,6 +915,8 @@ async function saveSettings() {
 function showLogPanel(which) {
   $("logs-audit").classList.toggle("hidden", which !== "audit");
   $("logs-send").classList.toggle("hidden", which !== "send");
+  $("logs-audit-btn").classList.toggle("active", which === "audit");
+  $("logs-send-btn").classList.toggle("active", which === "send");
 }
 
 async function loadLogs() {
