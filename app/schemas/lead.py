@@ -55,6 +55,9 @@ class LeadView(BaseModel):
     score_reasons: list[Any] | None = None
     top_keyword: str | None = None
     decision_source: str | None = None
+    reviewed_by: str | None = None
+    reviewed_at: UtcDatetime | None = None
+    review_note: str | None = None
     created_at: UtcDatetime
     updated_at: UtcDatetime
 

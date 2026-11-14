@@ -49,6 +49,9 @@ class LeadEntry:
     score_reasons: list[Any] | None
     top_keyword: str | None
     decision_source: str | None
+    reviewed_by: str | None
+    reviewed_at: datetime | None
+    review_note: str | None
     created_at: datetime
     updated_at: datetime
 
@@ -265,14 +268,59 @@ def list_leads(
         conditions.append(Lead.language == language)
     total_statement = select(func.count()).select_from(Lead).where(*conditions)
     total = session.scalar(total_statement) or 0
+    if status == "PENDING_REVIEW":
+        ordering = (Lead.score.is_(None), Lead.score.desc(), Lead.id.desc())
+    else:
+        ordering = (Lead.id.desc(),)
     rows = session.scalars(
         select(Lead)
         .where(*conditions)
-        .order_by(Lead.id.desc())
+        .order_by(*ordering)
         .offset(offset)
         .limit(limit)
     ).all()
     return [_to_lead(row) for row in rows], total
+
+
+def list_pool(
+    session: Session, *, offset: int, limit: int
+) -> tuple[list[LeadEntry], int]:
+    """Return one page of APPROVED leads, highest score first."""
+    conditions = [Lead.status == "APPROVED"]
+    total = session.scalar(
+        select(func.count()).select_from(Lead).where(*conditions)
+    ) or 0
+    rows = session.scalars(
+        select(Lead)
+        .where(*conditions)
+        .order_by(Lead.score.is_(None), Lead.score.desc(), Lead.id.desc())
+        .offset(offset)
+        .limit(limit)
+    ).all()
+    return [_to_lead(row) for row in rows], total
+
+
+def update_review(
+    session: Session,
+    lead_id: int,
+    *,
+    status: str,
+    decision_source: str,
+    reviewed_by: str,
+    reviewed_at: datetime,
+    review_note: str | None,
+) -> None:
+    """Store the outcome and metadata of one manual review."""
+    row = session.get(Lead, lead_id)
+    if row is None:
+        return
+    row.status = status
+    row.decision_source = decision_source
+    row.reviewed_by = reviewed_by
+    row.reviewed_at = reviewed_at
+    row.review_note = review_note
+    row.updated_at = reviewed_at
+    session.flush()
 
 
 def list_for_screening(
@@ -409,6 +457,9 @@ def _to_lead(row: Lead) -> LeadEntry:
         score_reasons=row.score_reasons,
         top_keyword=row.top_keyword,
         decision_source=row.decision_source,
+        reviewed_by=row.reviewed_by,
+        reviewed_at=row.reviewed_at,
+        review_note=row.review_note,
         created_at=row.created_at,
         updated_at=row.updated_at,
     )

@@ -26,6 +26,12 @@
 | Q-16 | **no-op 配置更新的审计语义**：关键词 / 频控 PATCH 提交与现值相同的字段时仍写 `*_UPDATED` 审计，而同类的 `PUT /settings` 会跳过无变化项；AC-CFG-004 只说「任一配置变更」 | 无变化（`before == after`）不写审计，直接返回原对象，与 settings 的语义对齐 | CFG-004、T-04 |
 | Q-17 | **数据模型三处缺失约束**：`template` 无 `version >= 1`；`lead.batch_id` 无索引；`lead.phone_hash` 仅普通索引，「一个号码至多一条线索」只靠服务层 | 补 `CHECK(version >= 1)`、`Index(batch_id)`、`phone_hash` 部分唯一索引（`WHERE phone_hash IS NOT NULL`，同 suppression 款式），并在 03-data-model 新增 INV-11；原型无 Alembic，重建库即可 | 03-data-model、SYS-008、T-01/T-05 |
 
+## 待决问题（T-07 新增，待人类确认）
+
+| 编号 | 问题 | 建议决议 | 影响 |
+|---|---|---|---|
+| Q-18 | **批量审核的请求 / 响应结构未定义**：`modules/pool.md` §3.2 只规定 ≤200 条、逐条独立处理与每条结果 `{lead_id, ok, error?}`，`04-api-contract.md` 未给示例 | 请求 `{"reviews":[{lead_id, decision, note?}]}`，响应 `{"results":[{lead_id, ok, error?}]}`；每项独立提交，失败项返回 `error.code/message`。T-07 已按此实现，确认后同步 04-api-contract 与 pool.md §3.2 | POOL-004、T-07 测试、管理页批量审核 |
+
 ## 变更记录
 
 | 版本 | 日期 | 变更 | 原因 | 影响文件 |

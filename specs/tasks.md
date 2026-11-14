@@ -15,7 +15,7 @@
 | ☑ | T-04 | 配置管理与种子：关键词 / 频控 / 设置注册表 CRUD、环境变量启动校验、`seed.py` | CFG-001, CFG-002, CFG-003, CFG-004, CFG-006, CFG-007, CFG-008, SCR-011 | T-01, T-03 | 1.0h（实际 ≈1.8h） | M1 |
 | ☑ | T-05 | 线索导入：`LeadSource`（Mock / CsvJson / InstagramStub）、导入服务与 API、**`data/mock_leads.json` 与 `mock_blacklist.csv`（按 05 号文档）** | LEAD-001~013, LEAD-015 | T-02, T-03, T-04 | 2.0h（实际 ≈2.2h） | M1 |
 | ☑ | T-06 | 评分引擎（`domain/scoring`）+ 筛选服务与 API | SCR-001~010, SCR-012, SCR-013, SCR-015 | T-04, T-05 | 1.5h（实际 ≈2.1h） | M2 |
-| ☐ | T-07 | 目标池与人工审核（单条 / 批量）、池查询 | POOL-001~005 | T-06 | 1.0h | M2 |
+| ☑ | T-07 | 目标池与人工审核（单条 / 批量）、池查询 | POOL-001~005 | T-06 | 1.0h（实际 ≈1.5h） | M2 |
 | ☐ | T-08 | 模板服务：版本化、审核、变量白名单、渲染（`domain/render`）、预览 | TPL-001~004, TPL-006~009 | T-04 | 1.0h | M2 |
 | ☐ | T-09 | 合规服务：consent、suppression、入站文本判定（服务层）、合规类闸门判定函数、静默时段；池的"可触达预估" | COMP-001, COMP-002, COMP-003, COMP-005, COMP-008~013, POOL-006 | T-05, T-07 | 1.5h | M2 |
 | ☐ | T-10 | Messenger 接口与实现：`MockMessenger`（确定性矩阵 / 幂等）、`WhatsAppCloudStub`、契约测试 | CAMP-030, CAMP-031 | T-00 | 1.0h | M3 |

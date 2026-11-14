@@ -13,6 +13,7 @@ from app.api.config import router as config_router
 from app.api.errors import register_exception_handlers
 from app.api.lead import router as lead_router
 from app.api.middleware import AdminAuthMiddleware, RequestContextMiddleware
+from app.api.pool import router as pool_router
 from app.api.screening import router as screening_router
 from app.api.system import router as system_router
 from app.core.clock import Clock, SystemClock
@@ -71,6 +72,7 @@ def create_app(
     app.include_router(config_router)
     app.include_router(lead_router)
     app.include_router(screening_router)
+    app.include_router(pool_router)
     return app
 
 
