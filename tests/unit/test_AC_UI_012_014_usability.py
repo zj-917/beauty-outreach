@@ -275,7 +275,7 @@ def test_AC_UI_013_every_page_has_guide_and_next_step() -> None:
     source = read_js()
     for hint in [
         "下一步：点击「自动筛选」",
-        "下一步：到左侧「2 任务」创建发送任务",
+        "下一步：到左侧「任务」创建发送任务",
         "下一步：点「打开任务详情」",
         "下一步：回到任务详情点「恢复」",
     ]:

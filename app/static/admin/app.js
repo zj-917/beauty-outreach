@@ -594,7 +594,7 @@ async function reviewLead(leadId, decision, note) {
   await loadLeads();
   setGuideText(
     "leads-next",
-    "审核已保存，人工决定不会被自动评分覆盖。下一步：到左侧「2 任务」创建发送任务。"
+    "审核已保存，人工决定不会被自动评分覆盖。下一步：到左侧「任务」创建发送任务。"
   );
 }
 
@@ -627,7 +627,7 @@ async function bulkReview(decision) {
   await loadLeads();
   setGuideText(
     "leads-next",
-    "批量审核已保存。下一步：到左侧「2 任务」创建发送任务。"
+    "批量审核已保存。下一步：到左侧「任务」创建发送任务。"
   );
 }
 
@@ -1129,7 +1129,7 @@ async function demoReset() {
   if (!window.confirm("重置演示数据？将清空当前数据并恢复初始演示数据。")) return;
   const result = await api("/demo/reset", { method: "POST" });
   $("demo-result").textContent = "已重置：" + fmtJson(result.counts);
-  setGuideText("compliance-next", "演示数据已恢复初始状态。请从左侧「1 线索」重新开始。");
+  setGuideText("compliance-next", "演示数据已恢复初始状态。请从左侧「线索」重新开始。");
   await loadCompliance();
 }
 
