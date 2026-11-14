@@ -80,7 +80,7 @@ def test_AC_TPL_009_preview_has_no_side_effects(
         after_send = session.scalar(select(func.count()).select_from(SendLog)) or 0
     assert after_audit == before_audit
     assert after_send == before_send == 0
-    assert client.app.state.messenger is None
+    assert client.app.state.messenger.calls == 0
 
 
 def test_AC_TPL_009_preview_requires_body_or_template(

@@ -20,7 +20,7 @@
 | ☑ | T-09 | 合规服务：consent、suppression、入站文本判定（服务层）、合规类闸门判定函数、静默时段；池的"可触达预估" | COMP-001, COMP-002, COMP-003, COMP-005, COMP-008~013, POOL-006 | T-05, T-07 | 1.5h（实际 ≈2.0h） | M2 |
 | ☑ | T-10 | Messenger 接口与实现：`MockMessenger`（确定性矩阵 / 幂等）、`WhatsAppCloudStub`、契约测试 | CAMP-030, CAMP-031 | T-00 | 1.0h（实际 ≈1.2h） | M3 |
 | ☑ | T-11 | 任务创建（目标快照、幂等键）、状态机、控制接口（start/pause/resume/cancel 的状态层）、任务 / 明细查询 | CAMP-001~004, CAMP-027, CAMP-029 | T-07, T-08, T-09 | 1.5h（实际 ≈2.0h） | M3 |
-| ☐ | T-12 | 发送引擎 A：Worker、原子认领与租约、Processor、完整闸门链、全局 / 单收件人频控、`send_log` | CAMP-005, CAMP-010~014, CAMP-018, CAMP-025, COMP-004, COMP-007, TPL-005 | T-09, T-10, T-11 | 2.0h | M3 |
+| ☑ | T-12 | 发送引擎 A：Worker、原子认领与租约、Processor、完整闸门链、全局 / 单收件人频控、`send_log` | CAMP-005, CAMP-010~014, CAMP-018, CAMP-025, COMP-004, COMP-007, TPL-005 | T-09, T-10, T-11 | 2.0h（实际 ≈2.3h） | M3 |
 | ☐ | T-13 | 发送引擎 B：失败分类、退避重试、超时、暂停 / 恢复 / 取消语义、租约回收与重启恢复、自动完成、配置实时生效 | CAMP-006~009, CAMP-015~017, CAMP-019, CAMP-023, CAMP-026, CFG-005 | T-12 | 2.0h | M3 |
 | ☐ | T-14 | 回执处理与 Webhook：状态回执、入站 STOP、签名校验、演示辅助端点 | CAMP-020, CAMP-021, COMP-006, SYS-009, SYS-012 | T-13 | 1.0h | M4 |
 | ☐ | T-15 | 熔断与干跑预览 | CAMP-022, CAMP-024 | T-13 | 1.0h | M4 |

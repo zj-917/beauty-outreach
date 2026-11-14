@@ -58,7 +58,26 @@ class Defer:
     reason: str
 
 
+@dataclass(frozen=True)
+class Release:
+    """Gate 1 asks the caller to drop the lease without touching the item."""
+
+
 GateResult = Pass | Skip | Defer
+SendDecision = Release | Pass | Skip | Defer
+
+
+@dataclass(frozen=True)
+class SendContext:
+    """Pre-fetched inputs for the full nine-gate send chain."""
+
+    task_running: bool
+    compliance: ComplianceSnapshot
+    template_approved: bool
+    render_failed: str | None
+    already_contacted: bool
+    recipient_rate_limited: bool
+    global_rate_until: datetime | None = None
 
 
 def suppression_gate(snapshot: ComplianceSnapshot) -> GateResult:
@@ -114,6 +133,31 @@ def readiness(snapshot: ComplianceSnapshot) -> str:
         if isinstance(result, Skip):
             return "NO_PHONE" if result.reason == "INVALID_PHONE" else result.reason
     return "READY"
+
+
+def send_decision(context: SendContext) -> SendDecision:
+    """Apply the nine send gates in order; the first non-pass gate decides."""
+    if not context.task_running:
+        return Release()
+    snapshot = context.compliance
+    for gate in (suppression_gate, phone_gate, consent_gate):
+        result = gate(snapshot)
+        if not isinstance(result, Pass):
+            return result
+    if not context.template_approved:
+        return Skip("TEMPLATE_NOT_APPROVED")
+    if context.render_failed is not None:
+        return Skip(context.render_failed)
+    if context.already_contacted:
+        return Skip("ALREADY_CONTACTED")
+    if context.recipient_rate_limited:
+        return Skip("RECIPIENT_RATE_LIMITED")
+    result = quiet_hours_gate(snapshot)
+    if not isinstance(result, Pass):
+        return result
+    if context.global_rate_until is not None:
+        return Defer(context.global_rate_until, "RATE_LIMIT_GLOBAL")
+    return Pass()
 
 
 def _quiet_hours_until(snapshot: ComplianceSnapshot) -> datetime | None:

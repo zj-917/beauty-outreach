@@ -3,20 +3,25 @@
 from __future__ import annotations
 
 import socket
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from sqlalchemy import Engine
+from sqlalchemy import Engine, select
+from sqlalchemy.orm import Session
 
 from app.core.clock import FakeClock
 from app.core.config import Settings
 from app.core.db import build_engine
+from app.domain.masking import mask_phone
+from app.engine.processor import Processor
+from app.engine.worker import Worker
 from app.main import create_app
-from app.models import create_schema
+from app.models import ContactConsent, Lead, LeadBatch, create_schema
+from app.providers.messenger.mock import MockMessenger
 
 FERNET_TEST_KEY = "ZmDfcTF7_60GrrY167zsiPd67pEvs0ouEkuFfKjGmS0="
 
@@ -113,3 +118,97 @@ def anon_client(app: FastAPI) -> Iterator[TestClient]:
     """Test client without default authentication headers."""
     with TestClient(app, raise_server_exceptions=False) as test_client:
         yield test_client
+
+
+@pytest.fixture
+def messenger(clock: FakeClock) -> MockMessenger:
+    """Deterministic messenger shared by engine tests."""
+    return MockMessenger(clock)
+
+
+@pytest.fixture
+def worker(app: FastAPI, clock: FakeClock, messenger: MockMessenger) -> Worker:
+    """Worker driven manually through ``tick()`` in tests."""
+    processor = Processor(
+        clock, app.state.phone_cipher, messenger, worker_id="worker-test"
+    )
+    return Worker(
+        app.state.session_factory, clock, processor, worker_id="worker-test"
+    )
+
+
+@pytest.fixture
+def make_lead(
+    db: Engine, app: FastAPI
+) -> Callable[..., int]:
+    """Insert an APPROVED lead (optionally with phone and consent) directly."""
+    cipher = app.state.phone_cipher
+    now = datetime(2026, 11, 14, 9, 0, tzinfo=UTC)
+
+    def _make(
+        *,
+        username: str,
+        phone: str | None = None,
+        consent: str | None = "GRANTED",
+        status: str = "APPROVED",
+        score: int = 80,
+        top_keyword: str | None = "serum",
+        display_name: str | None = None,
+    ) -> int:
+        with Session(db) as session:
+            batch = session.scalar(select(LeadBatch).order_by(LeadBatch.id))
+            if batch is None:
+                batch = LeadBatch(
+                    source_type="MOCK",
+                    source_name="engine-tests",
+                    total_rows=0,
+                    imported=0,
+                    duplicates=0,
+                    invalid=0,
+                    warnings=0,
+                    errors=[],
+                    created_by="test",
+                    created_at=now,
+                )
+                session.add(batch)
+                session.flush()
+            phone_hash = cipher.hash_phone(phone) if phone else None
+            phone_masked = mask_phone(phone) if phone else None
+            lead = Lead(
+                batch_id=batch.id,
+                username=username,
+                display_name=display_name or username,
+                bio="beauty skincare enthusiast",
+                region="US",
+                language="en",
+                source_url=None,
+                phone_enc=cipher.encrypt(phone) if phone else None,
+                phone_hash=phone_hash,
+                phone_masked=phone_masked,
+                status=status,
+                score=score,
+                score_reasons=[],
+                top_keyword=top_keyword,
+                decision_source="AUTO",
+                created_at=now,
+                updated_at=now,
+            )
+            session.add(lead)
+            session.flush()
+            if phone_hash is not None and consent is not None:
+                session.add(
+                    ContactConsent(
+                        phone_hash=phone_hash,
+                        phone_masked=phone_masked or "",
+                        status=consent,
+                        source="test",
+                        evidence_ref="test-evidence",
+                        granted_at=now if consent == "GRANTED" else None,
+                        updated_at=now,
+                        updated_by="test",
+                    )
+                )
+            session.commit()
+            return lead.id
+
+    return _make

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import threading
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -25,19 +26,32 @@ from app.core.db import build_engine, build_session_factory
 from app.core.logging import configure_logging
 from app.core.security import PhoneCipher
 from app.domain.masking import redact_log_text
+from app.engine.processor import Processor
+from app.engine.worker import Worker
 from app.models import create_schema
+from app.providers.messenger import MockMessenger
 from app.services.audit_service import AuditService
 from app.services.seed_service import database_is_empty, seed_defaults
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    """Seed an empty database when configured, then release the engine on stop."""
+    """Seed an empty database, run the worker thread, and release resources."""
     if app.state.settings.seed_defaults:
         with app.state.session_factory() as session:
             if database_is_empty(session):
                 seed_defaults(session, app.state.clock)
+    worker: Worker | None = app.state.worker
+    thread: threading.Thread | None = None
+    if worker is not None:
+        thread = threading.Thread(
+            target=worker.run_forever, name="outreach-worker", daemon=True
+        )
+        thread.start()
     yield
+    if worker is not None and thread is not None:
+        worker.stop()
+        thread.join(timeout=5)
     app.state.engine.dispose()
 
 
@@ -59,13 +73,31 @@ def create_app(
     app.state.settings = settings
     app.state.clock = clock or SystemClock()
     app.state.audit_service = AuditService(app.state.clock)
+    if messenger is None and settings.messenger_provider == "mock":
+        messenger = MockMessenger(app.state.clock)
     app.state.messenger = messenger
     app.state.phone_cipher = PhoneCipher(
         settings.phone_enc_key, settings.phone_hash_key
     )
     app.state.engine = engine
     app.state.session_factory = build_session_factory(engine)
-    app.state.worker_status = "disabled"
+    worker: Worker | None = None
+    if settings.worker_enabled and messenger is not None:
+        processor = Processor(
+            app.state.clock,
+            app.state.phone_cipher,
+            messenger,
+            worker_id="worker-1",
+        )
+        worker = Worker(
+            app.state.session_factory,
+            app.state.clock,
+            processor,
+            worker_id="worker-1",
+            tick_seconds=settings.tick_seconds,
+        )
+    app.state.worker = worker
+    app.state.worker_status = "running" if worker is not None else "disabled"
 
     register_exception_handlers(app)
     app.add_middleware(AdminAuthMiddleware, admin_token=settings.admin_token)

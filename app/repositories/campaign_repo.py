@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 
 from sqlalchemy import func, or_, select, update
@@ -55,6 +55,8 @@ class ItemEntry:
     task_id: int
     lead_id: int
     lead_username: str | None
+    idempotency_key: str
+    phone_hash: str | None
     phone_masked: str | None
     status: str
     reason_code: str | None
@@ -62,6 +64,7 @@ class ItemEntry:
     next_attempt_at: datetime | None
     provider_message_id: str | None
     last_error_code: str | None
+    last_error_message: str | None
     sent_at: datetime | None
     delivered_at: datetime | None
     read_at: datetime | None
@@ -216,6 +219,70 @@ def skip_open_items(
     return int(result.rowcount or 0)
 
 
+def list_running_task_ids(session: Session) -> list[int]:
+    """Return ids of every RUNNING campaign."""
+    return list(
+        session.scalars(
+            select(CampaignTask.id)
+            .where(CampaignTask.status == "RUNNING")
+            .order_by(CampaignTask.id)
+        ).all()
+    )
+
+
+def claim_items(
+    session: Session,
+    *,
+    task_id: int,
+    worker_id: str,
+    now: datetime,
+    lease_seconds: int,
+    limit: int,
+) -> list[int]:
+    """Lease up to `limit` claimable items of a RUNNING task atomically."""
+    stale = now - timedelta(seconds=lease_seconds)
+    rows = session.scalars(
+        select(TaskItem)
+        .join(CampaignTask, CampaignTask.id == TaskItem.task_id)
+        .where(
+            TaskItem.task_id == task_id,
+            CampaignTask.status == "RUNNING",
+            TaskItem.status.in_(("PENDING", "RETRY_WAIT")),
+            or_(TaskItem.next_attempt_at.is_(None), TaskItem.next_attempt_at <= now),
+            or_(TaskItem.locked_at.is_(None), TaskItem.locked_at < stale),
+        )
+        .order_by(TaskItem.id)
+        .limit(limit)
+    ).all()
+    for row in rows:
+        row.locked_by = worker_id
+        row.locked_at = now
+    session.flush()
+    return [row.id for row in rows]
+
+
+def get_item(session: Session, item_id: int) -> ItemEntry | None:
+    """Return one item with its lead username."""
+    row = session.execute(
+        select(TaskItem, Lead.username)
+        .join(Lead, Lead.id == TaskItem.lead_id)
+        .where(TaskItem.id == item_id)
+    ).first()
+    if row is None:
+        return None
+    return _to_item(row[0], row[1])
+
+
+def update_item(session: Session, item_id: int, **fields: Any) -> None:
+    """Apply the given column changes to one item row."""
+    row = session.get(TaskItem, item_id)
+    if row is None:
+        return
+    for name, value in fields.items():
+        setattr(row, name, value)
+    session.flush()
+
+
 def list_items(
     session: Session,
     campaign_id: int,
@@ -279,6 +346,8 @@ def _to_item(row: TaskItem, lead_username: str | None) -> ItemEntry:
         task_id=row.task_id,
         lead_id=row.lead_id,
         lead_username=lead_username,
+        idempotency_key=row.idempotency_key,
+        phone_hash=row.phone_hash,
         phone_masked=row.phone_masked,
         status=row.status,
         reason_code=row.reason_code,
@@ -286,6 +355,7 @@ def _to_item(row: TaskItem, lead_username: str | None) -> ItemEntry:
         next_attempt_at=row.next_attempt_at,
         provider_message_id=row.provider_message_id,
         last_error_code=row.last_error_code,
+        last_error_message=row.last_error_message,
         sent_at=row.sent_at,
         delivered_at=row.delivered_at,
         read_at=row.read_at,

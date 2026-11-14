@@ -2,7 +2,7 @@
 
 > 规则（SDD 变更控制）：实现中发现 spec 歧义 / 矛盾 / 缺失 → 停 → 在「待决问题」追加 → 人类确认 → **先改 spec，再改代码** → 在「变更记录」登记。
 
-## 待决问题（v1.0–v1.6 已全部决议，2026-11-14）
+## 待决问题（v1.0–v1.6 已全部决议，2026-11-14；Q-21 待确认）
 
 > 以下 20 项已由人类逐条确认，全部按第三列「最终决议」执行；Q-9 ~ Q-11 已同步修订对应 AC 文本，Q-12 修订 lead.md §4.3–§4.4，Q-13/Q-14 修订 screening.md §3.5、§5，Q-15 修订 02-architecture §5、modules/audit.md §4.1、modules/system.md 与 AC-SYS-008，Q-16 修订 config-stats 的审计语义，Q-17 修订 03-data-model §2.3、§2.6、§4 与 05-mock-data §6，Q-18 修订 04-api-contract.md 与 modules/pool.md §3.2，Q-19 修订 04-api-contract.md、modules/template.md §3.1/§4 与 modules/audit.md §4.2，Q-20 修订 modules/pool.md §3.3。后续再发现歧义时继续按同一流程追加。
 
@@ -28,6 +28,7 @@
 | Q-18 | **批量审核的请求 / 响应结构未定义**：`modules/pool.md` §3.2 只规定 ≤200 条、逐条独立处理与每条结果 `{lead_id, ok, error?}`，`04-api-contract.md` 未给示例 | 沿用 T-07 已实现的结构：请求 `{"reviews":[{lead_id, decision, note?}]}`，响应 `{"results":[{lead_id, ok, error?}]}`；每项独立提交，失败项返回 `error.code/message`（2026-11-14 人类确认） | POOL-004、T-07 测试、管理页批量审核 |
 | Q-19 | **模板草稿编辑端点与审计动作缺失**：`modules/template.md` §3.1 规定 `DRAFT` 可编辑、修改 `APPROVED` 的 body → 409 `TEMPLATE_IMMUTABLE`，AC-TPL-004 也要求「尝试修改 body」；但 `04-api-contract.md` 未列模板更新端点，`modules/audit.md` §4.2 的 action 注册表也没有 `TEMPLATE_UPDATED` | 补 `PATCH /templates/{id}`（`{body?, language?}`，仅 DRAFT 可改，APPROVED / DISABLED → 409 `TEMPLATE_IMMUTABLE`），新增审计动作 `TEMPLATE_UPDATED`；T-08 已按此实现（2026-11-14 人类确认） | TPL-004、T-08 测试、管理页配置页 |
 | Q-20 | **POOL-006 的 `delivery_readiness` 词表未覆盖 `INVALID_PHONE`**：发送闸门的 PHONE 闸门区分 `NO_PHONE` 与 `INVALID_PHONE`，但 `modules/pool.md` §3.3 的池值只有 `NO_PHONE` 等六种；当线索有密文但解密后不是 E.164 时如何标注未定义 | 池中把 `INVALID_PHONE` 归入 `NO_PHONE`（导入已丢弃非法号码，池词表保持六种）；发送闸门仍返回 `INVALID_PHONE`；T-09 已按此实现（2026-11-14 人类确认） | POOL-006、pool.md §3.3、T-09 测试 |
+| Q-21 | **发送侧渲染失败的原因码未覆盖 `RENDER_TOO_LONG`**：`modules/campaign.md` §5 的 TEMPLATE 闸门与 §11 原因码表只列 `TEMPLATE_VARIABLE_MISSING`，但 `domain/render` 还会抛 `RENDER_TOO_LONG`（AC-TPL-007：渲染后 > 1024 字符）；此时明细的 `SKIPPED` 原因码取什么未定义 | **待确认**（T-12 暂以 `RenderError.code` 原样作为原因码，即可能出现 `SKIPPED(RENDER_TOO_LONG)`） | CAMP-010、campaign.md §11、T-12 测试 |
 
 ## 变更记录
 
