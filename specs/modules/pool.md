@@ -1,6 +1,6 @@
 # 模块规格：pool（目标用户池与人工确认）
 
-> 版本 v1.1 · 状态 定稿（2026-11-14 修订 Q-18） · 依赖：lead、screening、compliance（只读，用于"可触达预估"）、audit
+> 版本 v1.2 · 状态 定稿（2026-11-14 修订 Q-20） · 依赖：lead、screening、compliance（只读，用于"可触达预估"）、audit
 
 ## 1. 目标
 
@@ -31,7 +31,7 @@
 `POST /leads/review-bulk`：请求 `{"reviews":[{"lead_id":1,"decision":"APPROVE"|"REJECT","note":"…"}]}`，≤ 200 条；逐条独立处理（每条独立提交），响应 `{"results":[{"lead_id":1,"ok":true}]}`，失败项附 `error:{code, message}`；单条失败不影响其他。
 
 ### 3.3 池查询与"可触达预估"
-`GET /pool` 返回 `APPROVED` 线索，每条附 `delivery_readiness`，值为 `READY` / `BLACKLISTED` / `UNSUBSCRIBED` / `NO_PHONE` / `NO_CONSENT` / `CONSENT_REVOKED`（优先级与发送闸门一致：suppression → 号码 → 授权）。**必须复用 `domain/gates` 的同一批判定函数**，避免与真实发送行为不一致。响应同时给出各类计数汇总。
+`GET /pool` 返回 `APPROVED` 线索，每条附 `delivery_readiness`，值为 `READY` / `BLACKLISTED` / `UNSUBSCRIBED` / `NO_PHONE` / `NO_CONSENT` / `CONSENT_REVOKED`（优先级与发送闸门一致：suppression → 号码 → 授权）。**必须复用 `domain/gates` 的同一批判定函数**，避免与真实发送行为不一致。响应同时给出各类计数汇总。`INVALID_PHONE`（密文解密后不是 E.164）在池中归入 `NO_PHONE`；发送闸门仍返回 `INVALID_PHONE`。
 
 > 注意：黑名单 / 退订不改变线索的 `status`（仍在池中），只在发送闸门被拦截；池列表如实标注，便于运营理解"为什么没发"。
 
