@@ -16,6 +16,7 @@ from app.api.middleware import AdminAuthMiddleware, RequestContextMiddleware
 from app.api.pool import router as pool_router
 from app.api.screening import router as screening_router
 from app.api.system import router as system_router
+from app.api.template import router as template_router
 from app.core.clock import Clock, SystemClock
 from app.core.config import Settings, load_settings, validate_runtime_settings
 from app.core.db import build_engine, build_session_factory
@@ -73,6 +74,7 @@ def create_app(
     app.include_router(lead_router)
     app.include_router(screening_router)
     app.include_router(pool_router)
+    app.include_router(template_router)
     return app
 
 

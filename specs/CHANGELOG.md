@@ -27,6 +27,12 @@
 | Q-17 | **数据模型三处缺失约束**：`template` 无 `version >= 1`；`lead.batch_id` 无索引；`lead.phone_hash` 仅普通索引，「一个号码至多一条线索」只靠服务层 | 补 `CHECK(version >= 1)`、`Index(batch_id)`、`phone_hash` 部分唯一索引（`WHERE phone_hash IS NOT NULL`，同 suppression 款式），并在 03-data-model 新增 INV-11；原型无 Alembic，重建库即可 | 03-data-model、SYS-008、T-01/T-05 |
 | Q-18 | **批量审核的请求 / 响应结构未定义**：`modules/pool.md` §3.2 只规定 ≤200 条、逐条独立处理与每条结果 `{lead_id, ok, error?}`，`04-api-contract.md` 未给示例 | 沿用 T-07 已实现的结构：请求 `{"reviews":[{lead_id, decision, note?}]}`，响应 `{"results":[{lead_id, ok, error?}]}`；每项独立提交，失败项返回 `error.code/message`（2026-11-14 人类确认） | POOL-004、T-07 测试、管理页批量审核 |
 
+## 待决问题（T-08 新增，待人类确认）
+
+| 编号 | 问题 | 建议决议 | 影响 |
+|---|---|---|---|
+| Q-19 | **模板草稿编辑端点与审计动作缺失**：`modules/template.md` §3.1 规定 `DRAFT` 可编辑、修改 `APPROVED` 的 body → 409 `TEMPLATE_IMMUTABLE`，AC-TPL-004 也要求「尝试修改 body」；但 `04-api-contract.md` 未列模板更新端点，`modules/audit.md` §4.2 的 action 注册表也没有 `TEMPLATE_UPDATED` | 补 `PATCH /templates/{id}`（`{body?, language?}`，仅 DRAFT 可改，APPROVED / DISABLED → 409 `TEMPLATE_IMMUTABLE`），并新增审计动作 `TEMPLATE_UPDATED`；T-08 已按此实现，确认后同步 04-api-contract、template.md §3.1/§4 与 audit.md §4.2 | TPL-004、T-08 测试、管理页配置页 |
+
 ## 变更记录
 
 | 版本 | 日期 | 变更 | 原因 | 影响文件 |
