@@ -139,7 +139,12 @@ export function reasonChips(reasons, dict) {
       const entry = dict ? dict[code] : null;
       const delta = typeof item === "object" && item.delta !== undefined ? item.delta : null;
       const count = typeof item === "object" && item.count !== undefined ? item.count : null;
+      const detail =
+        typeof item === "object" && item.detail
+          ? String(item.detail).replace(/^bio:\s*/, "")
+          : "";
       let label = entry ? entry[0] : code;
+      if (detail) label += `「${detail}」`;
       if (delta !== null) label += ` ${delta >= 0 ? "+" : ""}${delta}`;
       if (count !== null) label += ` ×${count}`;
       return chip(label, TONE[code] || "accent", entry ? `${entry[0]}（${code}）：${entry[1]}` : code);

@@ -7,7 +7,7 @@
 |---|---|---|---|
 | AC-UI-001 | P1★ | `tests/integration/test_AC_UI_001_admin_static.py::test_AC_UI_001_admin_page_and_assets_are_served_without_external_resources`<br>`tests/integration/test_AC_UI_001_admin_static.py::test_AC_UI_001_admin_without_slash_redirects` | ✅ 已覆盖 |
 | AC-UI-002 | P1★ | `tests/unit/test_AC_UI_010_ui_static_checks.py::test_AC_UI_002_token_is_kept_in_session_storage_only` | ✅ 已覆盖 |
-| AC-UI-003 | P1★ | — | ⬜ 未覆盖 |
+| AC-UI-003 | P1★ | `tests/unit/test_AC_UI_003_lead_table.py::test_AC_UI_003_lead_table_type_filter_and_page_size`<br>`tests/unit/test_AC_UI_003_lead_table.py::test_AC_UI_003_lead_table_rows_and_review_actions`<br>`tests/unit/test_AC_UI_003_lead_table.py::test_AC_UI_003_lead_table_replaces_card_columns` | ✅ 已覆盖 |
 | AC-UI-004 | P1★ | — | ⬜ 未覆盖 |
 | AC-UI-005 | P1★ | — | ⬜ 未覆盖 |
 | AC-UI-006 | P1★ | — | ⬜ 未覆盖 |
@@ -158,7 +158,7 @@
 ## 汇总
 
 - AC 总数：149
-- 已覆盖：136
+- 已覆盖：137
 - 未覆盖 P0：0
-- 未覆盖 P1：8（不阻断）
+- 未覆盖 P1：7（不阻断）
 - 未覆盖 P2：5（不排期）

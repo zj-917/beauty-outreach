@@ -16,7 +16,6 @@ import {
   codeChip,
   reasonChips,
   table,
-  pager,
   empty,
   callout,
   openDrawer,
@@ -24,9 +23,8 @@ import {
   toast,
   toastError,
   fmtTime,
-  fmtDate,
   input,
-  field,
+  select,
   text,
 } from "../ui.js";
 import { histogram, ring } from "../charts.js";
@@ -47,10 +45,18 @@ const BATCH_ERROR_CATEGORIES = {
 };
 const BATCH_TAB_ORDER = ["duplicates", "invalid", "warnings"];
 const BATCH_TAB_LABELS = { success: "成功", duplicates: "重复", invalid: "无效", warnings: "警告" };
+const BOARD_STATUSES = ["NEW", "PENDING_REVIEW", "APPROVED", "REJECTED", "DISCARDED"];
+const PAGE_SIZES = [10, 20, 50, 100];
 
 let pageView = null;
 let pageParams = null;
-let state = { view: "board", q: "", poolPage: 1, poolSearch: "", expanded: {} };
+let state = {
+  view: "board",
+  q: "",
+  poolPage: 1,
+  poolSearch: "",
+  board: { status: "ALL", page: 1, size: 10 },
+};
 
 export async function render(view, params) {
   pageView = view;
@@ -59,12 +65,13 @@ export async function render(view, params) {
   clear(view);
   view.append(h("div", { class: "loading" }, [h("span", { class: "spinner" }), "正在读取线索…"]));
 
-  const [overview, batches, settings, leads, pool] = await Promise.all([
+  const [overview, batches, settings, leads, pool, distribution] = await Promise.all([
     loadOverview(true),
     api("/lead-batches", { query: { page_size: 5 } }),
     api("/settings"),
-    api("/leads", { query: { page_size: 100, q: state.q || null } }),
+    fetchLeadsPage(),
     api("/pool", { query: { page_size: 100 } }),
+    api("/leads", { query: { page_size: 100 } }),
   ]);
 
   clear(view);
@@ -76,8 +83,8 @@ export async function render(view, params) {
       button("刷新", { iconName: "refresh", onClick: () => refresh() }),
     ]),
     guide(
-      "先导入线索，再点「自动筛选」打分；分数落在中间区间的线索会进入「待人工确认」，由你决定是否入池。",
-      nextStepText(overview, batches, leads)
+      "先导入线索，再点「自动筛选」打分；分数落在中间区间的线索会进入「待人工确认」，由你决定是否入池。表格可按线索类型筛选并分页查看。",
+      nextStepText(overview, batches, distribution)
     )
   );
 
@@ -104,7 +111,7 @@ export async function render(view, params) {
   view.append(
     tabs(
       [
-        { key: "board", label: "筛选看板" },
+        { key: "board", label: "线索列表" },
         { key: "pool", label: "用户池名单", count: pool.total, tone: "ok" },
       ],
       state.view,
@@ -115,23 +122,42 @@ export async function render(view, params) {
   if (state.view === "pool") {
     view.append(renderPool(pool, overview));
   } else {
-    view.append(renderBoard(overview, leads, settings));
+    view.append(renderBoard(overview, leads, distribution, settings));
   }
 }
 
-function nextStepText(overview, batches, leads) {
-  const items = leads.items || [];
+function nextStepText(overview, batches, distribution) {
+  const items = distribution.items || [];
   const scored = items.some((lead) => lead.score !== null && lead.score !== undefined);
   const pending = (overview.leads_by_status || {}).PENDING_REVIEW || 0;
   if (!batches.total) return "下一步：点「导入示例线索」载入 52 行演示数据。";
   if (!scored) return "下一步：点「自动筛选」给线索打分并分档。";
-  if (pending > 0) return `下一步：在「待人工确认」列审核这 ${pending} 条线索。`;
+  if (pending > 0) return `下一步：把「线索类型」选为「待人工确认」，审核这 ${pending} 条线索。`;
   if ((overview.pool_size || 0) > 0) return "下一步：到「任务」用目标池创建触达任务。";
   return "下一步：继续导入或筛选线索，形成可触达的目标池。";
 }
 
 function refresh() {
   if (pageView) render(pageView, pageParams).catch((error) => toastError(error));
+}
+
+function leadsQuery() {
+  return {
+    status: state.board.status === "ALL" ? null : state.board.status,
+    page: state.board.page,
+    page_size: state.board.size,
+    q: state.q || null,
+  };
+}
+
+async function fetchLeadsPage() {
+  const data = await api("/leads", { query: leadsQuery() });
+  const pages = Math.max(1, Math.ceil((data.total || 0) / state.board.size));
+  if (state.board.page > pages) {
+    state.board.page = pages;
+    return api("/leads", { query: leadsQuery() });
+  }
+  return data;
 }
 
 async function importMock() {
@@ -173,7 +199,7 @@ async function runScreening() {
       h("div", { class: "prose" }, [
         h("p", {}, `本次处理 ${result.processed} 条线索：自动入池 ${result.approved} 条，待人工确认 ${result.pending_review} 条，丢弃 ${result.discarded} 条，未变化 ${result.unchanged} 条。`),
         result.warning ? callout(result.warning, "warn") : null,
-        h("p", { class: "muted" }, "下一步：到「待人工确认」列逐条决定是否入池。"),
+        h("p", { class: "muted" }, "下一步：把「线索类型」选为「待人工确认」，逐条决定是否入池。"),
       ]),
       { width: 500 }
     );
@@ -207,14 +233,14 @@ function batchSummary(batch, batches) {
   ]);
 }
 
-function renderBoard(overview, leads, settings) {
+function renderBoard(overview, leads, distribution, settings) {
   const low = Number(settings["screening.threshold_low"] || 40);
   const high = Number(settings["screening.threshold_high"] || 70);
-  const items = leads.items || [];
   const counts = overview.leads_by_status || {};
   const newCount = counts.NEW || 0;
+  const allCount = Object.values(counts).reduce((sum, value) => sum + value, 0);
+  const distributionItems = distribution.items || [];
   const wrap = h("div", { class: "board-wrap" });
-  state.histogram = null;
 
   if (newCount > 0) {
     wrap.append(
@@ -238,11 +264,12 @@ function renderBoard(overview, leads, settings) {
   const searchRow = h("div", { class: "search-row" }, [
     input({ type: "search", value: state.q, placeholder: "搜索用户名、显示名或简介…" }),
     button("搜索", { kind: "primary", onClick: () => {} }),
-    state.q ? button("清空", { onClick: () => { state.q = ""; refresh(); } }) : null,
+    state.q ? button("清空", { onClick: () => { state.q = ""; state.board.page = 1; refresh(); } }) : null,
   ]);
   const search = searchRow.querySelector("input");
   const doSearch = () => {
     state.q = search.value.trim();
+    state.board.page = 1;
     refresh();
   };
   search.addEventListener("keydown", (event) => {
@@ -251,111 +278,136 @@ function renderBoard(overview, leads, settings) {
   searchRow.querySelector("button").addEventListener("click", doSearch);
   wrap.append(searchRow);
 
-  if (items.length) {
+  /* 类型筛选、每页条数与翻页都交给 /leads 查询，避免只在前 100 条里过滤。 */
+  const typeSelect = select(
+    [
+      { value: "ALL", label: `全部（${allCount}）` },
+      ...BOARD_STATUSES.map((status) => ({
+        value: status,
+        label: `${(LEAD_STATUS_LABELS[status] || [status])[0]}（${counts[status] || 0}）`,
+      })),
+    ],
+    state.board.status,
+    {
+      onChange: (event) => {
+        state.board.status = event.target.value;
+        state.board.page = 1;
+        reload();
+      },
+    }
+  );
+  const sizeSelect = select(
+    PAGE_SIZES.map((sizeOption) => ({ value: String(sizeOption), label: `每页 ${sizeOption} 条` })),
+    String(state.board.size),
+    {
+      onChange: (event) => {
+        state.board.size = Number(event.target.value);
+        state.board.page = 1;
+        reload();
+      },
+    }
+  );
+  const tableHost = h("div", { class: "board-table-host" });
+  wrap.append(
+    h("div", { class: "search-row" }, [
+      h("span", { class: "muted" }, "线索类型："),
+      typeSelect,
+      h("span", { class: "spacer" }),
+      sizeSelect,
+    ]),
+    tableHost
+  );
+
+  let requestSeq = 0;
+
+  function paintTable(data) {
+    const items = data.items || [];
+    const total = data.total || 0;
+    const pages = Math.max(1, Math.ceil(total / state.board.size));
+    const emptyText = state.q
+      ? "没有匹配的线索。可以清空搜索后重试。"
+      : state.board.status === "ALL"
+        ? "还没有线索。点右上角「导入示例线索」开始。"
+        : "这个类型下暂时没有线索。可以切换类型查看其他线索。";
+    clear(tableHost);
+    tableHost.append(
+      table(
+        ["线索", "状态", "评分", "地区 / 语言", "号码", "操作"],
+        items.map((lead) => [
+          h("div", { class: "lead-cell" }, [
+            h("strong", {}, lead.display_name || lead.username),
+            h("span", { class: "mono muted" }, `@${lead.username}`),
+            lead.score_reasons && lead.score_reasons.length
+              ? reasonChips(lead.score_reasons.slice(0, 2), SCORE_REASON_LABELS)
+              : null,
+          ]),
+          badge(LEAD_STATUS_LABELS, lead.status),
+          lead.score === null || lead.score === undefined
+            ? h("span", { class: "muted" }, "未评分")
+            : chip(String(lead.score), lead.score >= high ? "ok" : lead.score >= low ? "warn" : "danger", `相关性评分 ${lead.score}`),
+          [lead.region, lead.language].filter(Boolean).join(" / ") || "—",
+          lead.phone_masked || h("span", { class: "muted" }, "无号码"),
+          lead.status === "PENDING_REVIEW"
+            ? h("div", { class: "btn-row" }, [
+                button("通过", { kind: "primary", onClick: () => reviewLead(lead, "APPROVE", "") }),
+                button("拒绝", { kind: "danger-ghost", onClick: () => reviewLead(lead, "REJECT", "") }),
+              ])
+            : button("详情", { onClick: () => openLeadDrawer(lead) }),
+        ]),
+        {
+          emptyText,
+          onRowClick: (index) => openLeadDrawer(items[index]),
+        }
+      ),
+      h("div", { class: "pager" }, [
+        h("span", { class: "muted" }, `共 ${total} 条 · 第 ${state.board.page} / ${pages} 页`),
+        h("span", { class: "spacer" }),
+        button("上一页", { disabled: state.board.page <= 1, onClick: () => { state.board.page -= 1; reload(); } }),
+        button("下一页", { disabled: state.board.page >= pages, onClick: () => { state.board.page += 1; reload(); } }),
+      ])
+    );
+  }
+
+  async function reload() {
+    const seq = ++requestSeq;
+    clear(tableHost);
+    tableHost.append(h("div", { class: "loading" }, [h("span", { class: "spinner" }), "正在读取线索…"]));
+    try {
+      const data = await fetchLeadsPage();
+      if (seq !== requestSeq) return;
+      paintTable(data);
+    } catch (error) {
+      if (seq !== requestSeq) return;
+      clear(tableHost);
+      tableHost.append(callout(`读取线索失败：${errorText(error)}`, "danger"));
+    }
+  }
+
+  paintTable(leads);
+
+  if (distributionItems.length) {
     const buckets = Array.from({ length: 10 }, (_, index) => ({
       label: index === 9 ? "90+" : `${index * 10}`,
-      count: items.filter((lead) => {
+      count: distributionItems.filter((lead) => {
         const score = lead.score;
         return score !== null && score !== undefined && Math.floor(score / 10) === index;
       }).length,
     }));
-    state.histogram = { buckets, low, high };  }
-
-  const columns = [
-    { status: "APPROVED", title: "自动入池", hint: "分数达到入池线，可直接用于任务", tone: "ok" },
-    { status: "PENDING_REVIEW", title: "待人工确认", hint: "分数在中间区间，需要你决定", tone: "warn" },
-    { status: "REJECTED", title: "已拒绝", hint: "人工决定不联系", tone: "danger" },
-    { status: "DISCARDED", title: "已丢弃", hint: "分数过低，不会联系", tone: "muted" },
-  ];
-  const board = h("div", { class: "board" });
-  for (const column of columns) {
-    const columnItems = items
-      .filter((lead) => lead.status === column.status)
-      .sort((a, b) => (b.score || 0) - (a.score || 0));
-    const cap = column.status === "PENDING_REVIEW" ? 12 : 6;
-    const expanded = Boolean(state.expanded[column.status]);
-    const shown = expanded ? columnItems : columnItems.slice(0, cap);
-    const list = h("div", { class: "board-list" }, shown.length
-      ? shown.map((lead) => leadCard(lead, low, high, column.status === "PENDING_REVIEW"))
-      : empty(column.status === "PENDING_REVIEW" ? "没有待确认线索。" : "这一列暂时为空。"));
-    if (columnItems.length > cap) {
-      list.append(
-        button(expanded ? "收起" : `显示全部 ${columnItems.length} 条`, {
-          onClick: () => {
-            state.expanded[column.status] = !expanded;
-            refresh();
-          },
-        })
-      );
-    }
-    board.append(
-      h("section", { class: `board-column tone-${column.tone}` }, [
-        h("div", { class: "board-head" }, [
-          h("div", {}, [
-            h("h3", {}, column.title),
-            h("p", { class: "muted" }, column.hint),
-          ]),
-          h("span", { class: "board-count" }, String((counts[column.status] || 0))),
-        ]),
-        list,
-      ])
-    );
-  }
-  wrap.append(board);
-  if (state.histogram) {
     wrap.append(
       card(
         "评分分布",
-        `共 ${items.length} 条；低于 ${low} 分丢弃，${low}–${high - 1} 分待确认，${high} 分及以上自动入池。`,
-        histogram(state.histogram.buckets, [
+        `共 ${distribution.total || distributionItems.length} 条；低于 ${low} 分丢弃，${low}–${high - 1} 分待确认，${high} 分及以上自动入池。`,
+        histogram(buckets, [
           { value: low, tone: "warn", label: `丢弃线 ${low}` },
           { value: high, tone: "ok", label: `入池线 ${high}` },
         ])
       )
     );
-  }
-  if (leads.total > items.length) {
-    wrap.append(callout(`共有 ${leads.total} 条线索，当前展示前 ${items.length} 条；可以用搜索缩小范围。`, "muted"));
+    if ((distribution.total || 0) > distributionItems.length) {
+      wrap.append(callout(`评分分布基于前 ${distributionItems.length} 条线索（共 ${distribution.total} 条）。`, "muted"));
+    }
   }
   return wrap;
-}
-
-function leadCard(lead, low, high, canReview) {
-  const tone = lead.score === null || lead.score === undefined ? "muted" : lead.score >= high ? "ok" : lead.score >= low ? "warn" : "danger";
-  const note = canReview ? input({ type: "text", placeholder: "备注（可选）" }) : null;
-  const cardNode = h("article", { class: "lead-card", onclick: (event) => {
-    if (event.target.closest("button, input, textarea, select, a, label")) return;
-    openLeadDrawer(lead);
-  } }, [
-    h("div", { class: "lead-card-head" }, [
-      h("div", {}, [
-        h("strong", { class: "lead-name" }, lead.display_name || lead.username),
-        h("span", { class: "muted" }, `@${lead.username}`),
-      ]),
-      lead.score !== null && lead.score !== undefined
-        ? ring(lead.score, { size: 56, stroke: 6, tone, label: String(lead.score) })
-        : chip("未评分", "muted"),
-    ]),
-    h("div", { class: "chip-row" }, [
-      badge(LEAD_STATUS_LABELS, lead.status),
-      lead.phone_masked ? chip(lead.phone_masked, "muted", "号码已脱敏") : chip("无号码", "muted"),
-      lead.region ? chip(lead.region, "muted") : null,
-      lead.language ? chip(lead.language, "muted") : null,
-    ]),
-    lead.top_keyword ? h("p", { class: "lead-keyword" }, `命中关键词：${lead.top_keyword}`) : null,
-    lead.score_reasons && lead.score_reasons.length ? reasonChips(lead.score_reasons.slice(0, 4), SCORE_REASON_LABELS) : null,
-    h("div", { class: "lead-card-foot" }, [
-      h("span", { class: "muted" }, lead.decision_source === "MANUAL" ? "人工决定" : "自动评分"),
-      canReview
-        ? h("div", { class: "lead-actions" }, [
-            note,
-            button("通过", { kind: "primary", onClick: () => reviewLead(lead, "APPROVE", note.value) }),
-            button("拒绝", { kind: "danger-ghost", onClick: () => reviewLead(lead, "REJECT", note.value) }),
-          ])
-        : button("查看详情", { onClick: () => openLeadDrawer(lead) }),
-    ]),
-  ]);
-  return cardNode;
 }
 
 async function reviewLead(lead, decision, note) {
@@ -538,7 +590,7 @@ function renderBatchCard(batch, host) {
     clear(body);
     if (active === "success") {
       body.append(
-        callout(`本批次成功导入 ${batch.imported} 条线索。成功行可以在「筛选看板」里查看与审核。`, "ok", button("去看线索", {
+        callout(`本批次成功导入 ${batch.imported} 条线索。成功行可以在「线索列表」里查看与审核。`, "ok", button("去看线索", {
           onClick: () => { go("#/leads"); },
         }))
       );

@@ -532,43 +532,15 @@ tbody tr.clickable:hover { background: var(--accent-soft); }
 .legend-item { display: inline-flex; align-items: center; gap: 5px; }
 .legend-item i { width: 8px; height: 8px; border-radius: 2px; background: var(--tone); }
 
-/* ---------- 线索看板与卡片 ---------- */
+/* ---------- 线索列表 ---------- */
 
 .board-wrap { display: grid; gap: 16px; }
-.board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 13px; align-items: start; }
-.board-column {
-  min-width: 0;
-  padding: 12px;
-  border: 1px solid var(--line);
-  border-top: 3px solid var(--tone);
-  border-radius: 14px;
-  background: var(--surface-2);
-}
-.board-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
-.board-head h3 { font-size: 13.5px; }
-.board-head p { margin-top: 1px; font-size: 10.5px; }
-.board-count { color: var(--tone); font-size: 20px; font-weight: 650; font-variant-numeric: tabular-nums; }
-.board-list { display: grid; gap: 9px; }
-
-.lead-card {
-  display: grid;
-  gap: 8px;
-  padding: 12px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--surface);
-  cursor: pointer;
-  transition: border-color 0.15s ease, transform 0.15s ease;
-}
-.lead-card:hover { border-color: var(--accent); transform: translateY(-1px); }
-.lead-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
-.lead-name { display: block; font-size: 13px; line-height: 1.35; overflow-wrap: anywhere; }
-.lead-card-head .muted { display: block; font-size: 10.5px; }
-.lead-keyword { color: var(--ink-2); font-size: 11.5px; }
-.lead-card-foot { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
-.lead-actions { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
-.lead-actions input { width: 120px; padding: 5px 8px; font-size: 11.5px; }
-.lead-actions button { padding: 5px 9px; font-size: 11.5px; }
+.board-table-host { display: grid; gap: 10px; }
+.lead-cell { display: grid; gap: 2px; min-width: 170px; }
+.lead-cell strong { font-size: 12.5px; line-height: 1.3; overflow-wrap: anywhere; }
+.lead-cell .muted { font-size: 10.5px; }
+.lead-cell .chip-row { margin-top: 2px; gap: 4px; }
+.lead-cell .chip { padding: 1px 5px; font-size: 9.5px; }
 
 .search-row { display: flex; align-items: center; gap: 8px; }
 .search-row input { max-width: 420px; }
@@ -837,7 +809,6 @@ tbody tr.clickable:hover { background: var(--accent-soft); }
 @keyframes rise { from { transform: translateY(3px); } to { transform: translateY(0); } }
 
 @media (max-width: 1240px) {
-  .board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .grid.two, .grid.two.wide-left { grid-template-columns: minmax(0, 1fr); }
   .gate-chain { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
@@ -863,7 +834,7 @@ tbody tr.clickable:hover { background: var(--accent-soft); }
   .view { padding: 20px 16px 60px; }
   .page-head { align-items: flex-start; flex-direction: column; }
   .page-head-copy h2 { font-size: 24px; }
-  .board, .kpi-row, .preview-grid, .readiness-summary { grid-template-columns: minmax(0, 1fr); }
+  .kpi-row, .preview-grid, .readiness-summary { grid-template-columns: minmax(0, 1fr); }
   .form-grid, .filter-grid, .item-filters, .setting-row { grid-template-columns: minmax(0, 1fr); }
   .gate-chain { grid-template-columns: minmax(0, 1fr); }
   .status-banner { flex-direction: column-reverse; align-items: flex-start; }
