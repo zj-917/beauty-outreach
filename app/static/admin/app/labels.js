@@ -201,9 +201,9 @@ export const SETTING_LABELS = {
 };
 
 export const BATCH_ERROR_LABELS = {
-  DUPLICATE_USERNAME: ["重复用户名", "这个用户名已经导入过，本次跳过"],
-  IMPORT_CONFLICT: ["号码归属冲突", "这个手机号已经属于另一条线索，不能复制"],
-  DUPLICATE_PHONE: ["重复号码", "这个手机号已被其他线索使用"],
+  DUPLICATE_USERNAME: ["重复用户名", "用户名已存在，本次不新建；原记录缺少的号码等资料会就地补全，状态不变"],
+  IMPORT_CONFLICT: ["号码归属冲突", "用户名已存在，但新号码与已有记录冲突；不覆盖原号码，原记录保持原样"],
+  DUPLICATE_PHONE: ["重复号码", "这个手机号已被其他线索使用，这一行不导入"],
   MISSING_USERNAME: ["缺少用户名", "这一行没有用户名，无法导入"],
   INVALID_USERNAME: ["用户名无效", "用户名只能包含字母、数字、点和下划线（1–30 位）"],
   INVALID_SOURCE_URL: ["来源链接无效", "来源必须是合规的 instagram.com 链接"],

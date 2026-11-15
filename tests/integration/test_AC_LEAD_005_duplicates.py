@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 from fastapi.testclient import TestClient
+from sqlalchemy import Engine, update
+from sqlalchemy.orm import Session
+
+from app.models import Lead
 
 HEADER = (
     "username,display_name,bio,region,language,source_url,phone,"
@@ -90,6 +94,33 @@ def test_AC_LEAD_005_merge_never_steals_another_leads_phone(
     assert without_phone["phone_masked"] is None
     owner = _lead(client, "owner.lead")
     assert owner["phone_masked"] == "+155****0161"
+
+
+def test_AC_LEAD_005_merge_fills_phone_on_pooled_lead(
+    client: TestClient, db: Engine
+) -> None:
+    """Given a pooled lead without a phone, when re-imported with one, it is filled in place."""
+    _import(client, "pool.merge,,,,,,,,\n")
+    lead = _lead(client, "pool.merge")
+    with Session(db) as session:
+        session.execute(
+            update(Lead)
+            .where(Lead.id == lead["id"])
+            .values(status="APPROVED", score=80)
+        )
+        session.commit()
+
+    body = _import(client, "pool.merge,,,,,,+15555550191,GRANTED,import,ev-1\n")
+
+    assert (body["imported"], body["duplicates"]) == (0, 1)
+    assert body["errors"][0]["code"] == "DUPLICATE_USERNAME"
+    merged = _lead(client, "pool.merge")
+    assert merged["id"] == lead["id"]
+    assert merged["status"] == "APPROVED"
+    assert merged["phone_masked"] == "+155****0191"
+    pool = client.get("/api/v1/pool").json()
+    assert pool["total"] == 1
+    assert pool["items"][0]["delivery_readiness"] == "READY"
 
 
 def test_AC_LEAD_005_phone_formatting_does_not_create_a_second_lead(
