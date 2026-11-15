@@ -33,8 +33,9 @@
 | ☑ | T-22 | 演示脚本 `docs/demo-script.md`、彩排 ×2、全新目录克隆验证、提交 | —（交付物 7） | T-21 | 2.0h（实际 ≈2.0h） | M6 |
 | ☑ | T-23 | 管理页可用性：全站中文文案与术语释义、每页引导与关键操作后的下一步、任务状态说明；同步修订 `admin-ui.md`（AC-UI-012~014）与 UI 检查清单 | UI-012, UI-013, UI-014 | T-18, T-22 | 1.5h（实际 ≈1.2h） | M6 |
 | ☑ | T-24 | 管理页布局重构（spec v1.2）：批次结果标签页与批次历史、线索页「导入与筛选 / 用户池」子页签（池摘要 KPI + 渐进披露表格）、任务详情仪表盘（状态横幅、发送漏斗、明细分组标签页）、配置折叠手风琴、design token 状态色统一；JS 按页面拆分 | UI-004, UI-006, UI-008, UI-015~018 | T-18, T-23 | 4.0h（实际 ≈1.5h） | M7 |
+| ☑ | T-25 | 管理页整体重构为「触达指挥台」（spec v2.0）：流水线信息架构、驾驶舱 / 线索看板 / 任务仪表盘 / 合规 / 记录 / 配置、全局演示向导、ES 模块化与静态测试更新 | UI-001~018 | T-24 | 4.0h（实际 ≈2.5h） | M7 |
 
-合计约 **37.0 小时**。未排期的 P2：`LEAD-014`、`POOL-007`、`POOL-008`、`COMP-014`、`CAMP-028`。
+合计约 **41.0 小时**。未排期的 P2：`LEAD-014`、`POOL-007`、`POOL-008`、`COMP-014`、`CAMP-028`。
 
 ## 通用约定（每个任务都适用）
 
@@ -56,4 +57,5 @@
 - **T-10**：AC-SYS-003 的期望路径清单 = `04-api-contract.md` 中全部非 P2 的 `/api/v1` 端点 + `/healthz`；`WhatsAppCloudStub` 只返回 `501 PROVIDER_NOT_ENABLED`，不建立任何网络路径。
 - **T-11**：AC-SYS-006 的 `MESSENGER_PROVIDER=whatsapp_cloud` 前置检查在 `POST /campaigns/{id}/start` 返回 `501 PROVIDER_NOT_ENABLED`；检查顺序按 Q-11（模板 APPROVED → 非终态明细 → Provider 可用），失败时任务状态不变。
 - **T-19**：权重调整后须同步更新 `screening.md` §6 与 `05-mock-data.md` §6.1，并记入 `CHANGELOG.md`；`mock_leads.json` 有 24 条 `expected_label=relevant`（A 类 20 + E 类 4），E 类 4 行是重复行、导入后不产生 lead，Precision/Recall 必须按「导入后的 lead」计算（relevant 分母 20），E/F 行跳过。另：`05-mock-data.md` §6 要求的 `mock_blacklist.csv` 黑名单导入至今未实现（seed 与 `/demo/reset` 都未导入），需在本任务补上并加测试（已随 T-19 完成，CHANGELOG v1.8）。
-- **T-23**：文案字典集中在 `app.js` 顶部（`*_LABELS` / `TASK_STATUS_GUIDE`）；新增状态、原因码、审计动作、对象类型或设置键时，必须同时补中文名与一句话释义。AC-UI-012~014 由静态检查测试兜底；界面观感、引导顺序与真实交互仍需按 `docs/ui-checklist.md` 在浏览器中人工走查。
+- **T-23**：文案字典集中在 `app/labels.js`（`*_LABELS` / `TASK_STATUS_GUIDE`）；新增状态、原因码、审计动作、对象类型或设置键时，必须同时补中文名与一句话释义。AC-UI-012~014 由静态检查测试兜底；界面观感、引导顺序与真实交互仍需按 `docs/ui-checklist.md` 在浏览器中人工走查。
+- **T-25**：前端入口为 `app/static/admin/app/main.js`，旧 `app.js` / `core.js` / `labels.js` / `pages-*.js` 已移除；静态测试递归扫描 `app/**/*.js`，不再按旧文件名读取。设计 token 在 `style.css`，文案字典在 `app/labels.js`；新增枚举必须同步补中文名与释义。演示向导的状态判断依赖 `/lead-batches`、`/leads`、`/campaigns`、`/suppressions`，不要改成只读页面状态。

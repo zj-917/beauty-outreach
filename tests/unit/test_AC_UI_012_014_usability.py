@@ -1,9 +1,4 @@
-"""Static usability checks for the admin UI (AC-UI-012 ~ AC-UI-014).
-
-The admin page keeps all copy and enum translations in JavaScript
-dictionaries; these tests read them as text so the checks stay deterministic
-and require no browser.
-"""
+"""Static usability checks for the admin UI (AC-UI-012 ~ AC-UI-014)."""
 
 from __future__ import annotations
 
@@ -11,18 +6,9 @@ import re
 from pathlib import Path
 
 ADMIN_DIR = Path(__file__).resolve().parents[2] / "app" / "static" / "admin"
+APP_DIR = ADMIN_DIR / "app"
 INDEX_HTML = ADMIN_DIR / "index.html"
-
-# app.js 已按页面 / 职责拆分为多个静态文件（spec v1.2 §6），检查时按加载顺序合并读取。
-JS_FILES = [
-    "labels.js",
-    "core.js",
-    "pages-overview.js",
-    "pages-leads.js",
-    "pages-tasks.js",
-    "pages-system.js",
-    "app.js",
-]
+LABELS_JS = APP_DIR / "labels.js"
 
 CJK_RE = re.compile(r"[一-鿿]")
 ENTRY_RE = re.compile(
@@ -180,12 +166,21 @@ SETTING_KEYS = [
     "message.optout_text",
     "compliance.stop_keywords",
 ]
+PAGE_MODULES = [
+    "dashboard.js",
+    "leads.js",
+    "tasks.js",
+    "task-detail.js",
+    "compliance.js",
+    "records.js",
+    "settings.js",
+]
 
 
 def read_js() -> str:
-    """Return all admin script sources concatenated in load order."""
+    """Return every admin ES module concatenated in path order."""
     return "\n".join(
-        (ADMIN_DIR / name).read_text(encoding="utf-8") for name in JS_FILES
+        path.read_text(encoding="utf-8") for path in sorted(APP_DIR.rglob("*.js"))
     )
 
 
@@ -197,7 +192,7 @@ def read_html() -> str:
 def parse_dict(source: str, name: str) -> dict[str, tuple[str, str]]:
     """Parse a ``const NAME = { CODE: ["中文", "释义"], ... }`` block."""
     match = re.search(rf"const {name} = \{{(.*?)\n\}};", source, re.S)
-    assert match is not None, f"{name} dictionary not found in app.js"
+    assert match is not None, f"{name} dictionary not found"
     entries: dict[str, tuple[str, str]] = {}
     for line in match.group(1).splitlines():
         item = ENTRY_RE.match(line)
@@ -220,8 +215,8 @@ def assert_labels(entries: dict[str, tuple[str, str]], codes: list[str]) -> None
 
 
 def test_AC_UI_012_all_enum_values_have_chinese_labels() -> None:
-    """Given the admin script, when scanned, then every enum has Chinese copy."""
-    source = read_js()
+    """Given the admin labels module, when scanned, then every enum has Chinese copy."""
+    source = LABELS_JS.read_text(encoding="utf-8")
     expected = {
         "LEAD_STATUS_LABELS": LEAD_STATUSES,
         "READINESS_LABELS": READINESS_VALUES,
@@ -246,9 +241,9 @@ def test_AC_UI_012_all_enum_values_have_chinese_labels() -> None:
 
 
 def test_AC_UI_012_no_raw_english_interface_labels() -> None:
-    """Given the admin page, when scanned, then English keys are not bare labels."""
-    html = read_html()
-    forbidden = [
+    """Given the admin sources, when scanned, then English keys are not bare labels."""
+    source = read_js() + "\n" + read_html()
+    for pattern in [
         ">Admin Token<",
         ">actor<",
         ">action<",
@@ -260,9 +255,8 @@ def test_AC_UI_012_no_raw_english_interface_labels() -> None:
         ">outcome<",
         ">reason_code<",
         ">term<",
-    ]
-    for pattern in forbidden:
-        assert pattern not in html, f"untranslated label remains: {pattern}"
+    ]:
+        assert pattern not in source, f"untranslated label remains: {pattern}"
     for required in [
         "访问口令",
         "操作人",
@@ -273,21 +267,20 @@ def test_AC_UI_012_no_raw_english_interface_labels() -> None:
         "原因代码",
         "关键词",
     ]:
-        assert required in html, f"missing Chinese label: {required}"
+        assert required in source, f"missing Chinese label: {required}"
 
 
 def test_AC_UI_013_every_page_has_guide_and_next_step() -> None:
-    """Given the admin page, when scanned, then all pages carry a guide block."""
-    html = read_html()
-    for page in ["overview", "leads", "tasks", "compliance", "config", "logs"]:
-        assert f'data-guide="{page}"' in html, f"missing guide block for {page}"
-    assert html.count("本页要做什么") >= 6
-    assert html.count("下一步") >= 6
-    assert "下一步：点击「导入示例线索」" in html, "initial lead hint is missing"
+    """Given the page modules, then each page offers a guide and a next step."""
     source = read_js()
+    assert "本页要做什么" in source
+    for module in PAGE_MODULES:
+        module_source = (APP_DIR / "pages" / module).read_text(encoding="utf-8")
+        assert "guide(" in module_source, f"{module} has no guide block"
+        assert "下一步" in module_source, f"{module} has no next-step copy"
     for hint in [
-        "下一步：点击「自动筛选」",
-        "下一步：到左侧「任务」创建发送任务",
+        "下一步：点「自动筛选」",
+        "下一步：到「任务」用目标池创建触达任务",
         "下一步：点「打开任务详情」",
         "下一步：回到任务详情点「恢复」",
     ]:
@@ -296,11 +289,13 @@ def test_AC_UI_013_every_page_has_guide_and_next_step() -> None:
 
 def test_AC_UI_014_task_status_guidance_covers_all_states() -> None:
     """Given task detail, when rendered, then each state explains what to do."""
-    source = read_js()
+    source = LABELS_JS.read_text(encoding="utf-8")
     guide = parse_dict(source, "TASK_STATUS_GUIDE")
     assert_labels(guide, TASK_STATUSES)
     for status in TASK_STATUSES:
         _, next_step = guide[status]
         assert "下一步" in next_step, f"{status} guidance misses next step"
-    assert "renderTaskStatusNote" in source, "task detail status note is not rendered"
-    assert "可用操作" in source, "task detail does not explain available actions"
+    detail = (APP_DIR / "pages" / "task-detail.js").read_text(encoding="utf-8")
+    assert "TASK_STATUS_GUIDE" in detail
+    assert "status-actions" in detail
+    assert "ACTION_DISABLED_REASON" in detail

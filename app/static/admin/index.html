@@ -3,462 +3,67 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Beauty Outreach 管理台</title>
+<title>Beauty Outreach · 触达指挥台</title>
+<link rel="icon" href="data:,">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="app">
-  <aside class="sidebar">
-    <div class="brand">
-      <span class="brand-mark" aria-hidden="true">BO</span>
-      <div>
-        <h1 class="brand-name">Beauty Outreach</h1>
-        <p class="brand-sub">合规外联控制台</p>
+
+  <div id="auth-root"></div>
+
+  <div id="app" class="app hidden">
+    <aside class="rail">
+      <div class="brand">
+        <span class="brand-mark">BO</span>
+        <div class="brand-copy">
+          <strong>Beauty Outreach</strong>
+          <span>触达指挥台</span>
+        </div>
       </div>
+
+      <nav id="side-nav" class="side-nav" aria-label="主导航"></nav>
+
+      <div class="rail-foot">
+        <button id="wizard-button" class="rail-action" type="button">
+          <span class="wizard-mark">◎</span>
+          <span class="nav-label">演示向导</span>
+        </button>
+        <div id="system-status" class="system-status">
+          <span class="dot tone-muted"></span><span>正在检查系统…</span>
+        </div>
+        <p class="rail-note">Mock 沙箱<br>不连接真实平台</p>
+      </div>
+    </aside>
+
+    <div class="workspace">
+      <header class="topbar">
+        <div class="topbar-copy">
+          <h1 id="page-title">驾驶舱</h1>
+          <p id="page-subtitle">先看整体，再决定下一步做什么</p>
+        </div>
+        <div class="topbar-actions">
+          <button id="palette-button" class="palette-button" type="button" title="快速跳转">
+            <span class="palette-key">⌘</span>
+            <span>搜索 / 跳转</span>
+            <kbd>Ctrl K</kbd>
+          </button>
+          <button id="compliance-chip" class="compliance-chip" type="button" title="查看演示环境说明"></button>
+          <button id="operator-button" class="operator" type="button" title="操作人与访问口令"></button>
+        </div>
+      </header>
+
+      <main id="view" class="view" aria-live="polite"></main>
     </div>
-    <nav id="tabs" aria-label="主导航">
-      <button type="button" data-page="overview">概览</button>
-      <button type="button" data-page="leads">线索</button>
-      <button type="button" data-page="tasks">任务</button>
-      <button type="button" data-page="compliance">合规</button>
-      <button type="button" data-page="logs">日志</button>
-      <button type="button" data-page="config">配置</button>
-    </nav>
-    <div class="sidebar-foot"><span class="dot"></span>演示环境 · 模拟发送渠道，不会联系真实用户</div>
-  </aside>
-
-  <div class="main">
-    <header class="topbar">
-      <div class="topbar-copy">
-        <p class="topbar-title">运营控制台</p>
-        <p class="topbar-hint">第一次使用？按左侧顺序操作：线索 → 任务 → 合规 → 日志。</p>
-      </div>
-      <div class="auth">
-        <label class="field">
-          <span>访问口令（Admin Token）</span>
-          <input id="token-input" type="password" autocomplete="off" placeholder="填写后点「保存」">
-        </label>
-        <label class="field">
-          <span>操作人（写入操作记录）</span>
-          <input id="operator-input" type="text" value="admin" size="10">
-        </label>
-        <button id="save-auth" type="button" class="primary">保存</button>
-        <span id="auth-state" class="muted"></span>
-      </div>
-    </header>
-
-    <div id="error-bar" class="error-bar hidden" role="alert">
-      <span id="error-text"></span>
-      <button id="error-close" type="button" aria-label="关闭">×</button>
-    </div>
-
-    <main class="content">
-      <section id="page-overview" class="page">
-        <div class="page-head">
-          <div>
-            <h2>概览</h2>
-            <p class="page-sub">先看整体数字；第一次使用请按左侧编号顺序完成一次演示。</p>
-          </div>
-          <div class="page-actions"><button id="overview-refresh" type="button">刷新</button></div>
-        </div>
-        <div class="guide" data-guide="overview">
-          <p class="guide-title">本页要做什么</p>
-          <p class="guide-text">四张卡片分别显示线索、目标池、任务和近 24 小时的发送情况。看完数字后，按下面的顺序走一次演示：</p>
-          <ol class="guide-steps">
-            <li><strong>线索</strong>：导入示例线索，自动打分筛选，再人工确认中间分段的线索。</li>
-            <li><strong>任务</strong>：把已入池的线索做成发送任务，先预览会发给谁，再启动。</li>
-            <li><strong>合规</strong>：查看授权、黑名单与退订；演示模式下可模拟用户退订和送达回执。</li>
-            <li><strong>日志</strong>：查看操作记录与每条线索的发送过程。</li>
-          </ol>
-          <p class="guide-next" id="overview-next">下一步：点「从第 1 步开始」，或直接点左侧「线索」。</p>
-          <button id="go-leads" type="button" class="primary">从第 1 步开始</button>
-        </div>
-        <div id="overview-cards" class="cards"></div>
-        <div id="overview-detail" class="panel"></div>
-      </section>
-
-      <section id="page-leads" class="page hidden">
-        <div class="page-head">
-          <div>
-            <h2>线索</h2>
-            <p class="page-sub">把候选线索导入系统，自动打分筛选，再人工确认中间分段的线索。</p>
-          </div>
-        </div>
-        <div class="guide" data-guide="leads">
-          <p class="guide-title">本页要做什么</p>
-          <p class="guide-text">按顺序完成三步：① 导入示例线索 → ② 自动筛选打分 → ③ 人工审核「待人工确认」的线索。已入池的名单可切到「用户池」子页签查看。示例数据只在本机生成，不会访问真实平台。</p>
-          <p class="guide-next" id="leads-next">下一步：点击「导入示例线索」。</p>
-        </div>
-        <div class="row subnav" id="leads-subnav">
-          <button id="leads-tab-import" type="button" class="active">导入与筛选</button>
-          <button id="leads-tab-pool" type="button">用户池</button>
-        </div>
-
-        <div id="leads-import-view">
-          <div class="panel">
-            <div class="panel-head">
-              <h3>导入</h3>
-              <span class="muted">先导入，再筛选；筛选会按关键词和资料给线索打分并分档。</span>
-            </div>
-            <div class="row">
-              <button id="import-mock" type="button" class="primary" title="使用内置演示数据，不会访问真实平台">导入示例线索（Mock）</button>
-              <label class="field file-field">
-                <span>从文件导入（CSV / JSON）</span>
-                <input id="import-file" type="file" accept=".csv,.json">
-              </label>
-              <button id="import-file-btn" type="button">上传并导入</button>
-              <span class="spacer"></span>
-              <button id="run-screening" type="button" title="按关键词和资料给线索打分并分档">自动筛选（打分）</button>
-            </div>
-          </div>
-
-          <div class="panel">
-            <div class="panel-head">
-              <h3>导入结果</h3>
-              <span class="muted">每次导入生成一张批次卡片；点标签页查看对应类别，历史批次在下方可展开。</span>
-            </div>
-            <div id="import-report"></div>
-            <div id="batch-history"></div>
-          </div>
-
-          <div class="panel">
-            <div class="panel-head">
-              <h3>筛选结果与人工审核</h3>
-              <span class="muted">只有「待人工确认」的线索可以审核；人工决定不会被自动评分覆盖。</span>
-            </div>
-            <div id="screening-cards" class="cards"></div>
-            <div id="screening-summary"></div>
-            <div class="row filter-row">
-              <label class="field"><span>最低分</span><input id="lead-min-score" type="number" min="0" max="100" size="4"></label>
-              <label class="field"><span>搜索</span><input id="lead-q" type="text" placeholder="用户名 / 显示名"></label>
-              <button id="lead-search" type="button" class="primary">查询</button>
-              <span class="spacer"></span>
-              <label class="field"><span>批量备注</span><input id="bulk-note" type="text" placeholder="可选"></label>
-              <button id="bulk-approve" type="button">批量通过</button>
-              <button id="bulk-reject" type="button">批量拒绝</button>
-            </div>
-            <div id="lead-results" class="table-host"></div>
-            <div class="pager">
-              <button id="lead-prev" type="button">上一页</button>
-              <span id="lead-page-info" class="muted"></span>
-              <button id="lead-next" type="button">下一页</button>
-            </div>
-          </div>
-        </div>
-
-        <div id="leads-pool-view" class="hidden">
-          <div class="panel">
-            <div class="panel-head">
-              <h3>用户池摘要</h3>
-              <span class="muted">已入池 = 可进入发送任务；可触达 = 有号码、已授权且不在黑名单 / 退订。</span>
-            </div>
-            <div id="pool-kpi" class="cards"></div>
-            <div id="pool-dist-note"></div>
-          </div>
-          <div class="panel">
-            <div class="panel-head">
-              <h3>用户明细</h3>
-              <span class="muted">默认只显示主要列，点击行展开简介、号码与命中原因。</span>
-            </div>
-            <div class="row filter-row">
-              <label class="field">
-                <span>视图</span>
-                <select id="pool-view">
-                  <option value="pool">已入池</option>
-                  <option value="pending">待人工确认</option>
-                  <option value="all">全部线索</option>
-                </select>
-              </label>
-              <label class="field"><span>搜索</span><input id="pool-q" type="text" placeholder="用户名 / 显示名"></label>
-              <button id="pool-search" type="button" class="primary">查询</button>
-            </div>
-            <div id="pool-table" class="table-host"></div>
-            <div class="pager">
-              <button id="pool-prev" type="button">上一页</button>
-              <span id="pool-page-info" class="muted"></span>
-              <button id="pool-next" type="button">下一页</button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="page-tasks" class="page hidden">
-        <div id="task-list-view">
-          <div class="page-head">
-            <div>
-              <h2>任务</h2>
-              <p class="page-sub">把已入池的线索做成一次发送任务：先预览会发给谁，确认后再启动。</p>
-            </div>
-          </div>
-          <div class="guide" data-guide="tasks">
-            <p class="guide-title">本页要做什么</p>
-            <p class="guide-text">① 填任务名称、选一个已审核模板、填最低分 → ② 点「创建任务并预览」（不会真的发送） → ③ 打开任务详情 → ④ 点「启动」开始发送。启动后通常 20–30 秒跑完。</p>
-            <p class="guide-next" id="tasks-next">下一步：填写任务信息后点「创建任务并预览」。</p>
-          </div>
-          <div class="panel">
-            <div class="panel-head"><h3>新建任务</h3><span class="muted">创建后可先预览，确认没问题再启动</span></div>
-            <div class="row">
-              <label class="field">
-                <span>任务名称</span>
-                <input id="task-name" type="text" placeholder="如：首轮问候">
-                <small class="field-hint">自己看得懂即可。</small>
-              </label>
-              <label class="field">
-                <span>消息模板</span>
-                <select id="task-template"></select>
-                <small class="field-hint">只列出已审核模板；草稿模板需先到配置页审核。</small>
-              </label>
-              <label class="field">
-                <span>最低分</span>
-                <input id="task-min-score" type="number" min="0" max="100" size="4">
-                <small class="field-hint">只选分数不低于该值的线索；演示填 70。</small>
-              </label>
-              <button id="task-create" type="button" class="primary">创建任务并预览（不会发送）</button>
-            </div>
-            <div id="task-preview"></div>
-          </div>
-          <div class="panel">
-            <div class="panel-head">
-              <h3>任务列表</h3>
-              <button id="task-refresh" type="button">刷新</button>
-            </div>
-            <div id="task-table" class="table-host"></div>
-          </div>
-        </div>
-        <div id="task-detail-view" class="hidden">
-          <div class="toolbar">
-            <button id="task-back" type="button">← 返回任务列表</button>
-            <button id="task-detail-refresh" type="button">刷新</button>
-            <span id="task-poll-note" class="muted"></span>
-          </div>
-          <div id="task-detail"></div>
-          <div id="task-items" class="panel"></div>
-        </div>
-      </section>
-
-      <section id="page-compliance" class="page hidden">
-        <div class="page-head">
-          <div>
-            <h2>合规</h2>
-            <p class="page-sub">查看谁授权、谁被拉黑、谁退订；演示模式下可模拟用户退订和送达回执。</p>
-          </div>
-        </div>
-        <div class="guide" data-guide="compliance">
-          <p class="guide-title">本页要做什么</p>
-          <p class="guide-text">这里有三份名单：授权（谁同意接收）、黑名单（运营禁止联系）、退订（用户主动拒绝，永久有效）。演示时可在下方「演示辅助」模拟用户回复退订，再回任务详情恢复任务，观察这条线索被跳过。</p>
-          <p class="guide-next" id="compliance-next">下一步：运行任务后，在下方「演示辅助」填入任务中的号码并模拟退订。</p>
-        </div>
-        <div class="panel">
-          <div class="panel-head">
-            <h3>授权名单（谁同意接收）</h3>
-            <button id="consent-refresh" type="button">刷新</button>
-          </div>
-          <p class="panel-note">没有授权记录的号码视为未授权，不能发送。</p>
-          <div id="consent-table" class="table-host"></div>
-        </div>
-        <div class="panel">
-          <div class="panel-head"><h3>黑名单与退订名单</h3><span class="muted">退订记录永久保留，不能删除</span></div>
-          <p class="panel-note">黑名单由运营手动加入，可以删除；退订由用户主动回复产生，永久有效。</p>
-          <div class="row">
-            <label class="field">
-              <span>号码</span>
-              <input id="suppress-phone" type="tel" placeholder="带国家码，如 +15555559004">
-            </label>
-            <label class="field">
-              <span>原因</span>
-              <input id="suppress-reason" type="text" placeholder="如：用户要求不再联系">
-            </label>
-            <button id="suppress-add" type="button" class="primary">加入黑名单</button>
-          </div>
-          <div id="suppression-table" class="table-host"></div>
-        </div>
-        <div id="demo-panel" class="panel hidden">
-          <div class="panel-head"><h3>演示辅助（仅演示环境可见）</h3><span class="muted">只在演示模式下出现</span></div>
-          <ul class="guide-steps compact">
-            <li><strong>模拟用户回复退订（STOP）</strong>：输入任务中的号码，系统会立即把他加入退订名单；运行中的任务处理到这条时会跳过。</li>
-            <li><strong>立即生成送达回执</strong>：让模拟渠道马上返回「已送达 / 已读 / 失败」，任务统计随之更新。</li>
-            <li><strong>重置演示数据</strong>：清空当前数据并恢复初始演示数据，用于重新开始。</li>
-          </ul>
-          <div class="row">
-            <label class="field">
-              <span>号码</span>
-              <input id="demo-phone" type="tel" placeholder="如 +15555559004">
-            </label>
-            <button id="demo-stop" type="button">模拟用户回复退订（STOP）</button>
-            <button id="demo-flush" type="button">立即生成送达回执</button>
-            <span class="spacer"></span>
-            <button id="demo-reset" type="button" class="danger">重置演示数据</button>
-          </div>
-          <div id="demo-result" class="muted"></div>
-        </div>
-      </section>
-
-      <section id="page-config" class="page hidden">
-        <div class="page-head">
-          <div>
-            <h2>配置</h2>
-            <p class="page-sub">在不改代码的情况下调整筛选关键词、发送限制、消息模板和系统参数；演示时通常不需要修改。</p>
-          </div>
-        </div>
-        <div class="guide" data-guide="config">
-          <p class="guide-title">本页要做什么</p>
-          <p class="guide-text">四个部分：关键词决定线索评分；频控规则决定发送速度上限；模板决定消息内容；设置是其他运行参数。所有修改保存后立即生效。</p>
-          <p class="guide-next" id="config-next">下一步：如需修改，按各部分的说明操作；否则直接去「日志」查看演示记录。</p>
-        </div>
-        <div id="config-error" class="inline-error"></div>
-        <details class="config-group" open>
-          <summary>关键词 <span class="muted">决定线索评分：正向词加分，负向词减分</span></summary>
-          <div class="panel">
-          <p class="panel-note">权重越大影响越强；关键词会在简介、用户名和显示名中匹配。</p>
-          <div class="row">
-            <label class="field">
-              <span>关键词</span>
-              <input id="kw-term" type="text" placeholder="英文或中文词，如 skincare">
-            </label>
-            <label class="field">
-              <span>类型</span>
-              <select id="kw-kind"><option>POSITIVE</option><option>NEGATIVE</option></select>
-            </label>
-            <label class="field">
-              <span>权重</span>
-              <input id="kw-weight" type="number" value="5" size="4">
-            </label>
-            <button id="kw-add" type="button" class="primary">新增</button>
-          </div>
-          <div id="keyword-table" class="table-host"></div>
-          </div>
-        </details>
-        <details class="config-group">
-          <summary>消息模板 <span class="muted">决定发送的消息内容</span></summary>
-          <div class="panel">
-            <p class="panel-note">新建后是草稿，点「审核通过」后才能用于任务；已审核的正文不能直接修改，要改请点「创建新版本」。</p>
-            <div class="row">
-              <label class="field"><span>名称</span><input id="tpl-name" type="text" placeholder="如：greeting"></label>
-              <label class="field"><span>语言</span><input id="tpl-language" type="text" value="en" size="5"></label>
-              <label class="field grow">
-                <span>正文（可用 {{username}} 等占位符）</span>
-                <textarea id="tpl-body" rows="2" placeholder="Hi {{username}}, ..."></textarea>
-              </label>
-              <button id="tpl-create" type="button">新建模板</button>
-            </div>
-            <div id="template-table" class="table-host"></div>
-            <div id="template-preview" class="muted"></div>
-          </div>
-        </details>
-        <details class="config-group">
-          <summary>频控规则 <span class="muted">决定发送速度上限</span></summary>
-          <div class="panel">
-            <p class="panel-note">所有启用的规则同时生效，取最严格的一条；系统要求至少保留一条全局规则和一条单收件人规则。</p>
-            <div class="row">
-              <label class="field">
-                <span>名称</span>
-                <input id="rr-name" type="text" placeholder="如：global_default">
-              </label>
-              <label class="field">
-                <span>范围</span>
-                <select id="rr-scope"><option>GLOBAL</option><option>PER_RECIPIENT</option></select>
-              </label>
-              <label class="field"><span>窗口（秒）</span><input id="rr-window" type="number" value="10" size="5"></label>
-              <label class="field"><span>上限（次）</span><input id="rr-max" type="number" value="5" size="4"></label>
-              <button id="rr-add" type="button" class="primary">新增</button>
-            </div>
-            <div id="rate-table" class="table-host"></div>
-          </div>
-        </details>
-        <details class="config-group">
-          <summary>设置 <span class="muted">其他运行参数，修改后立即生效</span></summary>
-          <div class="panel">
-            <p class="panel-note">每个字段先显示中文名和用途，括号内是系统字段名；修改后点「保存设置」立即生效。</p>
-            <div id="settings-form" class="settings-grid"></div>
-            <div class="row">
-              <span class="spacer"></span>
-              <button id="settings-save" type="button" class="primary">保存设置</button>
-            </div>
-          </div>
-        </details>
-      </section>
-
-      <section id="page-logs" class="page hidden">
-        <div class="page-head">
-          <div>
-            <h2>日志</h2>
-            <p class="page-sub">审计日志记录人对系统做了什么；发送日志记录系统对每条线索做了什么；号码均已脱敏。</p>
-          </div>
-        </div>
-        <div class="guide" data-guide="logs">
-          <p class="guide-title">本页要做什么</p>
-          <p class="guide-text">两类日志分工不同：审计日志看「谁在什么时候做了什么操作」；发送日志看「某条线索经过了哪些检查、是否真的发送」。在任务详情里点某条明细的「日志」，会自动跳到这里并填好任务编号与明细编号。</p>
-          <p class="guide-next" id="logs-next">下一步：先选上方「审计日志」或「发送日志」，填好筛选条件后点「查询」。</p>
-        </div>
-        <div class="row subnav">
-          <button id="logs-audit-btn" type="button" class="active">审计日志（操作记录）</button>
-          <button id="logs-send-btn" type="button">发送日志（每条线索的过程）</button>
-        </div>
-        <div id="logs-audit" class="panel">
-          <p class="panel-note">示例：操作人填 admin，动作填 CAMPAIGN_STARTED，对象类型填 campaign，对象编号填任务号。</p>
-          <div class="row filter-row">
-            <label class="field"><span>操作人</span><input id="audit-actor" type="text" placeholder="如 admin"></label>
-            <label class="field"><span>动作</span><input id="audit-action" type="text" placeholder="如 CAMPAIGN_STARTED"></label>
-            <label class="field"><span>对象类型</span><input id="audit-entity-type" type="text" placeholder="如 campaign"></label>
-            <label class="field"><span>对象编号</span><input id="audit-entity-id" type="text" placeholder="如 1"></label>
-            <button id="audit-search" type="button" class="primary">查询</button>
-          </div>
-          <div id="audit-table" class="table-host"></div>
-          <div class="pager">
-            <button id="audit-prev" type="button">上一页</button>
-            <span id="audit-page-info" class="muted"></span>
-            <button id="audit-next" type="button">下一页</button>
-          </div>
-        </div>
-        <div id="logs-send" class="panel hidden">
-          <p class="panel-note">示例：在任务详情里点某条明细的「日志」，会自动填好任务编号和明细编号。</p>
-          <div class="row filter-row">
-            <label class="field"><span>任务编号</span><input id="send-task" type="number" size="6"></label>
-            <label class="field"><span>明细编号</span><input id="send-item" type="number" size="6"></label>
-            <label class="field">
-              <span>阶段</span>
-              <select id="send-phase">
-                <option value="">全部</option>
-                <option>GATE</option>
-                <option>PROVIDER</option>
-                <option>RECEIPT</option>
-              </select>
-            </label>
-            <label class="field">
-              <span>结果</span>
-              <select id="send-outcome">
-                <option value="">全部</option>
-                <option>BLOCKED</option>
-                <option>DEFERRED</option>
-                <option>ACCEPTED</option>
-                <option>RETRYABLE_ERROR</option>
-                <option>PERMANENT_ERROR</option>
-                <option>DELIVERED</option>
-                <option>READ</option>
-                <option>DELIVERY_FAILED</option>
-              </select>
-            </label>
-            <label class="field"><span>原因代码</span><input id="send-reason" type="text" placeholder="如 UNSUBSCRIBED"></label>
-            <button id="send-search" type="button" class="primary">查询</button>
-          </div>
-          <div id="send-table" class="table-host"></div>
-          <div class="pager">
-            <button id="send-prev" type="button">上一页</button>
-            <span id="send-page-info" class="muted"></span>
-            <button id="send-next" type="button">下一页</button>
-          </div>
-        </div>
-      </section>
-    </main>
   </div>
-</div>
 
-<script src="labels.js"></script>
-<script src="core.js"></script>
-<script src="pages-overview.js"></script>
-<script src="pages-leads.js"></script>
-<script src="pages-tasks.js"></script>
-<script src="pages-system.js"></script>
-<script src="app.js"></script>
+  <div id="drawer-root"></div>
+  <div id="modal-root"></div>
+  <div id="toast-root" aria-live="polite"></div>
+
+  <noscript>
+    <p class="noscript">这个控制台需要启用 JavaScript 才能运行。</p>
+  </noscript>
+
+  <script type="module" src="app/main.js"></script>
 </body>
 </html>

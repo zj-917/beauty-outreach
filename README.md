@@ -27,10 +27,10 @@ python -m uvicorn app.main:app --reload
 
 然后打开：
 
-- 管理页 <http://127.0.0.1:8000/admin/>（在页面右上角填入 `.env` 中的 `ADMIN_TOKEN`）
+- 管理页 <http://127.0.0.1:8000/admin/>（若 8000 被占用，用 `--port 8010` 等端口并打开对应地址；在页面右上角填入 `.env` 中的 `ADMIN_TOKEN`）
 - Swagger <http://127.0.0.1:8000/docs>（点 Authorize 前需在请求头带 `X-Admin-Token`）
 
-`seed.py` 写入默认配置（26 项设置、25 个关键词、2 条频控规则、greeting 模板）与 `data/mock_blacklist.csv` 中的黑名单。**线索数据需要额外导入**：在管理页「线索 → 导入 Mock 数据」，或调用 `POST /api/v1/lead-batches/import`（body `{"source": "mock"}`）。
+`seed.py` 写入默认配置（26 项设置、25 个关键词、2 条频控规则、greeting 模板）与 `data/mock_blacklist.csv` 中的黑名单。**线索数据需要额外导入**：在管理页「线索 → 导入示例线索」，或调用 `POST /api/v1/lead-batches/import`（body `{"source": "mock"}`）。
 
 更多命令：
 
@@ -56,7 +56,7 @@ python scripts/eval_screening.py  # 评分评测：混淆矩阵 + Precision/Reca
 | 回执 | 签名 Webhook（`X-Hub-Signature-256`）与 Mock 轮询；状态只前进；入站 STOP 即时退订 |
 | 审计与日志 | 同事务写审计、SHA-256 哈希链可校验、任务时间线、`send_log` 查询；号码全程脱敏 |
 | 统计 | 任务统计（8 种明细状态、成功率、原因分组、尝试直方图）与全局总览 |
-| 管理页 | 原生 HTML/CSS/JS（无构建、无外部资源），token 仅存 `sessionStorage` |
+| 管理页 | 「触达指挥台」：驾驶舱 / 线索 / 任务 / 合规 / 记录 / 配置 + 演示向导；原生 HTML/CSS/ES 模块（无构建、无外部资源），token 仅存 `sessionStorage` |
 
 ## 架构
 

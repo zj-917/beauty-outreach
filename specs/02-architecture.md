@@ -75,7 +75,7 @@ beauty-outreach/
 │   ├── providers/
 │   │   ├── lead_source/        # base.py mock.py csv_json.py instagram_stub.py
 │   │   └── messenger/          # base.py mock.py whatsapp_cloud_stub.py
-│   └── static/                 # admin/index.html, app.js, style.css
+│   └── static/                 # admin/index.html, admin/app/*.js, admin/style.css
 ├── data/                       # mock_leads.json  mock_consents.csv  mock_blacklist.csv  sample_leads.csv
 ├── scripts/                    # seed.py demo.py eval_screening.py ac_coverage.py
 └── tests/

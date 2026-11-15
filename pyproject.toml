@@ -30,7 +30,11 @@ dev = [
 include = ["app*"]
 
 [tool.setuptools.package-data]
-app = ["static/admin/*"]
+app = [
+  "static/admin/*",
+  "static/admin/app/*.js",
+  "static/admin/app/pages/*.js",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

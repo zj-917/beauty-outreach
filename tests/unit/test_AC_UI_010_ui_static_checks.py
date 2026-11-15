@@ -5,25 +5,14 @@ from __future__ import annotations
 from pathlib import Path
 
 ADMIN_DIR = Path(__file__).resolve().parents[2] / "app" / "static" / "admin"
-
-JS_FILES = [
-    "labels.js",
-    "core.js",
-    "pages-overview.js",
-    "pages-leads.js",
-    "pages-tasks.js",
-    "pages-system.js",
-    "app.js",
-]
+APP_DIR = ADMIN_DIR / "app"
 
 
 def read_js() -> str:
-    """Return all admin script sources concatenated in load order."""
-    return "\n".join(
-        (ADMIN_DIR / name).read_text(encoding="utf-8")
-        for name in JS_FILES
-        if (ADMIN_DIR / name).exists()
-    )
+    """Return every admin ES module concatenated in path order."""
+    files = sorted(APP_DIR.rglob("*.js"))
+    assert files, "admin app modules are missing"
+    return "\n".join(path.read_text(encoding="utf-8") for path in files)
 
 
 def test_AC_UI_010_no_innerhtml_assignment() -> None:

@@ -1,22 +1,6 @@
-"use strict";
+/* 全站中文文案与释义。新增枚举时必须同时补中文名与一句话释义。 */
 
-/*
- * 文案与释义字典（唯一来源）。
- * 新增状态、原因码、审计动作、对象类型或设置键时，必须同步补充中文名与一句话释义。
- */
-
-const ITEM_STATUSES = [
-  "PENDING",
-  "SENDING",
-  "RETRY_WAIT",
-  "SENT",
-  "DELIVERED",
-  "READ",
-  "FAILED",
-  "SKIPPED",
-];
-
-const LEAD_STATUS_LABELS = {
+export const LEAD_STATUS_LABELS = {
   NEW: ["新导入", "刚导入，还没有评分"],
   PENDING_REVIEW: ["待人工确认", "分数处在中间区间，需要人工决定是否入池"],
   APPROVED: ["已入池", "可以进入发送任务"],
@@ -24,7 +8,7 @@ const LEAD_STATUS_LABELS = {
   DISCARDED: ["已丢弃", "分数过低，不会联系"],
 };
 
-const READINESS_LABELS = {
+export const READINESS_LABELS = {
   READY: ["可发送", "满足号码、授权和黑名单等全部条件"],
   BLACKLISTED: ["黑名单", "号码在运营黑名单中，禁止发送"],
   UNSUBSCRIBED: ["已退订", "用户回复过退订，永久不再联系"],
@@ -33,7 +17,7 @@ const READINESS_LABELS = {
   CONSENT_REVOKED: ["授权已撤销", "用户撤回了接收授权"],
 };
 
-const TASK_STATUS_LABELS = {
+export const TASK_STATUS_LABELS = {
   DRAFT: ["草稿", "任务已创建，还没有开始发送"],
   RUNNING: ["运行中", "系统正在逐条检查并发送"],
   PAUSED: ["已暂停", "暂时停止处理，可以恢复"],
@@ -41,15 +25,7 @@ const TASK_STATUS_LABELS = {
   CANCELLED: ["已取消", "任务已终止，未发送的线索被跳过"],
 };
 
-const TASK_STATUS_GUIDE = {
-  DRAFT: ["当前状态：草稿——还没有发送任何消息。", "下一步：点「启动」开始发送；如果不想发送，点「取消」。"],
-  RUNNING: ["当前状态：运行中——系统正在逐条检查并发送，通常 20–30 秒完成。", "下一步：等待自动刷新；如需临时停止，点「暂停」。"],
-  PAUSED: ["当前状态：已暂停——不会继续发送。", "下一步：点「恢复」继续；如果不再发送，点「取消」。"],
-  COMPLETED: ["当前状态：已完成——全部线索都有了结果。", "下一步：在下方查看明细，或点某条明细的「日志」查看过程。"],
-  CANCELLED: ["当前状态：已取消——任务已终止。", "下一步：返回任务列表新建一个任务，或到日志页查看记录。"],
-};
-
-const ITEM_STATUS_LABELS = {
+export const ITEM_STATUS_LABELS = {
   PENDING: ["待发送", "等待系统处理"],
   SENDING: ["发送中", "正在调用发送渠道"],
   RETRY_WAIT: ["等待重试", "上次失败，稍后自动重试"],
@@ -60,7 +36,7 @@ const ITEM_STATUS_LABELS = {
   SKIPPED: ["已跳过", "按合规或去重规则未发送"],
 };
 
-const REASON_LABELS = {
+export const REASON_LABELS = {
   BLACKLISTED: ["黑名单", "号码在运营黑名单中，禁止发送"],
   UNSUBSCRIBED: ["已退订", "用户回复过退订，永久不再联系"],
   NO_PHONE: ["无号码", "线索没有可用手机号"],
@@ -87,7 +63,7 @@ const REASON_LABELS = {
   RATE_LIMITED: ["渠道限流", "发送渠道要求稍后再发"],
 };
 
-const SCORE_REASON_LABELS = {
+export const SCORE_REASON_LABELS = {
   KW_POS: ["正向关键词", "资料命中了正向词，加分"],
   KW_NEG: ["负向关键词", "命中了负向词，减分"],
   REGION_MATCH: ["地区符合", "地区在优先名单内，加分"],
@@ -95,26 +71,26 @@ const SCORE_REASON_LABELS = {
   LANG_MATCH: ["语言符合", "语言在优先名单内，加分"],
   LANG_MISMATCH: ["语言不符", "语言不在优先名单内，减分"],
   BIO_TOO_SHORT: ["简介过短", "资料太少，信息不足，减分"],
-  CLAMP: ["分数截断", "总分超出 0 到 100，被截断到边界"],
+  CLAMP: ["分数截断", "总分超出 0–100，被截断到边界"],
 };
 
-const TEMPLATE_STATUS_LABELS = {
+export const TEMPLATE_STATUS_LABELS = {
   DRAFT: ["草稿", "还不能用于任务，需要先审核通过"],
   APPROVED: ["已审核", "可以用于创建发送任务"],
   DISABLED: ["已停用", "不再用于新任务"],
 };
 
-const SUPPRESSION_TYPE_LABELS = {
+export const SUPPRESSION_TYPE_LABELS = {
   BLACKLIST: ["黑名单", "运营手动加入，可以删除"],
   UNSUBSCRIBE: ["退订", "用户主动回复，永久有效且不可删除"],
 };
 
-const CONSENT_STATUS_LABELS = {
+export const CONSENT_STATUS_LABELS = {
   GRANTED: ["已授权", "用户同意接收消息"],
   REVOKED: ["已撤销", "用户撤回了接收授权"],
 };
 
-const SOURCE_LABELS = {
+export const SOURCE_LABELS = {
   web_form: ["网页表单", "用户在网页表单中主动留资并授权"],
   crm_import: ["CRM 导入", "从企业自有 CRM 数据导入"],
   csv_import: ["文件导入", "通过 CSV 或 JSON 文件导入"],
@@ -127,23 +103,23 @@ const SOURCE_LABELS = {
   inbound_stop: ["用户退订", "用户回复退订指令后产生"],
 };
 
-const KEYWORD_KIND_LABELS = {
+export const KEYWORD_KIND_LABELS = {
   POSITIVE: ["正向加分", "命中后提高线索分数"],
   NEGATIVE: ["负向减分", "命中后降低线索分数"],
 };
 
-const RATE_SCOPE_LABELS = {
+export const RATE_SCOPE_LABELS = {
   GLOBAL: ["全局", "限制整个系统的发送速度"],
   PER_RECIPIENT: ["单收件人", "限制同一号码的接收频率"],
 };
 
-const PHASE_LABELS = {
+export const PHASE_LABELS = {
   GATE: ["发送前检查", "检查这条线索是否允许发送"],
   PROVIDER: ["调用发送渠道", "真正把消息交给发送渠道"],
   RECEIPT: ["送达回执", "渠道回报送达、已读或失败"],
 };
 
-const OUTCOME_LABELS = {
+export const OUTCOME_LABELS = {
   BLOCKED: ["被拦截", "检查不通过，没有发送"],
   DEFERRED: ["推迟处理", "暂时不满足时间条件，稍后再处理"],
   ACCEPTED: ["已受理", "发送渠道接受了消息"],
@@ -154,7 +130,7 @@ const OUTCOME_LABELS = {
   DELIVERY_FAILED: ["送达失败", "渠道报告发送失败"],
 };
 
-const ENTITY_TYPE_LABELS = {
+export const ENTITY_TYPE_LABELS = {
   lead: ["线索", "导入的候选客户"],
   lead_batch: ["导入批次", "一次导入操作产生的批次"],
   campaign: ["发送任务", "一次批量触达任务"],
@@ -166,7 +142,7 @@ const ENTITY_TYPE_LABELS = {
   system_setting: ["系统设置", "运行参数"],
 };
 
-const AUDIT_ACTION_LABELS = {
+export const AUDIT_ACTION_LABELS = {
   LEAD_BATCH_IMPORTED: ["导入线索", "把一批候选线索写入系统"],
   LEAD_SCREENING_RUN: ["运行筛选", "对线索自动打分并分档"],
   LEAD_REVIEWED: ["人工审核线索", "人工通过或拒绝线索"],
@@ -195,7 +171,7 @@ const AUDIT_ACTION_LABELS = {
   CAMPAIGN_CIRCUIT_OPENED: ["自动熔断暂停", "连续失败达到阈值，系统自动暂停任务"],
 };
 
-const SETTING_LABELS = {
+export const SETTING_LABELS = {
   "screening.auto_approve_enabled": ["自动入池开关", "开启后，高分线索自动进入目标池"],
   "screening.threshold_high": ["自动入池分数线", "分数达到该值即自动入池"],
   "screening.threshold_low": ["人工确认下限", "低于该值直接丢弃，介于两档之间需人工确认"],
@@ -224,35 +200,107 @@ const SETTING_LABELS = {
   "compliance.stop_keywords": ["退订关键词", "用户回复这些词时视为退订"],
 };
 
-const ERROR_HINTS = {
-  UNAUTHORIZED: "身份验证未通过：请在页面顶部「访问口令」中填入正确口令，然后重试。",
-  VALIDATION_ERROR: "填写的内容不符合要求，请检查后重试。",
-  NOT_FOUND: "找不到对应的数据，可能已被删除或编号有误。",
-  CONFLICT: "这条数据已经存在，或与当前状态冲突。",
-  INTERNAL_ERROR: "服务器内部错误，请稍后重试。",
-  CFG_LAST_RATE_RULE: "系统至少需要保留一条全局规则和一条单收件人规则。",
-  TEMPLATE_NOT_APPROVED: "模板还没有审核通过，不能用于任务。",
-  TEMPLATE_IMMUTABLE: "已审核的模板正文不能直接修改，请创建新版本。",
-  CAMPAIGN_EMPTY_TARGET: "没有符合条件的线索，任务没有创建。",
-  COMP_UNSUBSCRIBE_IMMUTABLE: "退订记录永久有效，不能删除。",
-  PROVIDER_NOT_ENABLED: "当前发送渠道未启用，无法发送。",
-};
-
-const PAUSE_REASON_LABELS = {
-  MANUAL: ["手动暂停", "由操作人手动暂停"],
-  CIRCUIT_OPEN: ["自动熔断", "连续失败达到阈值，系统自动暂停"],
-};
-
-/* 导入批次报告的错误码（lead_service 的分类结果）。 */
-const BATCH_ERROR_LABELS = {
+export const BATCH_ERROR_LABELS = {
   DUPLICATE_USERNAME: ["重复用户名", "这个用户名已经导入过，本次跳过"],
   IMPORT_CONFLICT: ["号码归属冲突", "这个手机号已经属于另一条线索，不能复制"],
   DUPLICATE_PHONE: ["重复号码", "这个手机号已被其他线索使用"],
   MISSING_USERNAME: ["缺少用户名", "这一行没有用户名，无法导入"],
   INVALID_USERNAME: ["用户名无效", "用户名只能包含字母、数字、点和下划线（1–30 位）"],
-  INVALID_SOURCE_URL: ["来源链接无效", "来源必须是 https 的 instagram.com 链接"],
+  INVALID_SOURCE_URL: ["来源链接无效", "来源必须是合规的 instagram.com 链接"],
   INVALID_REGION: ["地区无效", "地区不是两位国家 / 地区代码，已忽略该字段"],
   INVALID_LANGUAGE: ["语言无效", "语言标签格式不正确，已忽略该字段"],
-  INVALID_PHONE_DROPPED: ["号码无效已丢弃", "号码不是标准的 + 国家码格式，这条线索没有号码"],
+  INVALID_PHONE_DROPPED: ["号码无效已丢弃", "号码不是标准的国家码格式，这条线索没有号码"],
   CONSENT_INCOMPLETE: ["授权信息不完整", "登记授权需要有效号码、授权状态、来源与凭据"],
 };
+
+export const PAUSE_REASON_LABELS = {
+  MANUAL: ["手动暂停", "由操作人手动暂停"],
+  CIRCUIT_OPEN: ["自动熔断", "连续失败达到阈值，系统自动暂停"],
+};
+
+export const TASK_EVENT_LABELS = {
+  CREATED: ["创建任务", "生成一次发送任务"],
+  STARTED: ["启动任务", "开始逐条发送"],
+  PAUSED: ["暂停任务", "临时停止发送"],
+  RESUMED: ["恢复任务", "继续发送"],
+  CANCELLED: ["取消任务", "终止任务并跳过未发送线索"],
+  COMPLETED: ["任务完成", "所有线索都有了最终结果"],
+  CIRCUIT_OPENED: ["自动熔断", "连续失败达到阈值，系统自动暂停任务"],
+};
+
+export const TASK_STATUS_GUIDE = {
+  DRAFT: ["当前状态：草稿——还没有发送任何消息。", "下一步：点「启动」开始发送；如果不想发送，点「取消」。"],
+  RUNNING: ["当前状态：运行中——系统正在逐条检查并发送。", "下一步：等待自动刷新；如需临时停止，点「暂停」。"],
+  PAUSED: ["当前状态：已暂停——不会继续发送。", "下一步：点「恢复」继续；不再发送就点「取消」。"],
+  COMPLETED: ["当前状态：已完成——全部线索都有了结果。", "下一步：在下方查看明细，或点某条明细的「日志」查看过程。"],
+  CANCELLED: ["当前状态：已取消——任务已终止。", "下一步：返回任务列表新建任务，或到记录页查看日志。"],
+};
+
+export const TASK_ACTIONS = {
+  DRAFT: [["启动", "start"], ["取消", "cancel"]],
+  RUNNING: [["暂停", "pause"], ["取消", "cancel"]],
+  PAUSED: [["恢复", "resume"], ["取消", "cancel"]],
+  COMPLETED: [],
+  CANCELLED: [],
+};
+
+export const ACTION_DISABLED_REASON = {
+  start: "只有草稿任务可以启动。",
+  pause: "只有运行中的任务可以暂停。",
+  resume: "只有已暂停的任务可以恢复。",
+  cancel: "已完成或已取消的任务不能再取消。",
+};
+
+export const TONE = {
+  NEW: "muted", PENDING_REVIEW: "warn", APPROVED: "ok", REJECTED: "danger", DISCARDED: "muted",
+  READY: "ok", BLACKLISTED: "danger", UNSUBSCRIBED: "danger", NO_PHONE: "muted",
+  NO_CONSENT: "muted", CONSENT_REVOKED: "danger",
+  DRAFT: "muted", RUNNING: "info", PAUSED: "warn", COMPLETED: "ok", CANCELLED: "danger",
+  PENDING: "muted", SENDING: "info", RETRY_WAIT: "warn", SENT: "info", DELIVERED: "ok",
+  READ: "ok", FAILED: "danger", SKIPPED: "muted",
+  GRANTED: "ok", REVOKED: "danger", BLACKLIST: "danger", UNSUBSCRIBE: "danger",
+  POSITIVE: "ok", NEGATIVE: "danger", GLOBAL: "info", PER_RECIPIENT: "info",
+  BLOCKED: "danger", DEFERRED: "warn", ACCEPTED: "ok",
+  RETRYABLE_ERROR: "warn", PERMANENT_ERROR: "danger", DELIVERY_FAILED: "danger",
+};
+
+export const SETTING_GROUPS = [
+  { prefix: "screening.", label: "筛选与评分", desc: "决定线索如何打分、自动入池或进入人工确认。" },
+  { prefix: "sending.", label: "发送与重试", desc: "决定发送速度、重试节奏、熔断与静默时段。" },
+  { prefix: "message.", label: "消息内容", desc: "模板里可用的品牌名与自动退订提示。" },
+  { prefix: "compliance.", label: "合规关键词", desc: "用户回复哪些词会被视为退订。" },
+];
+
+export const TEMPLATE_VARIABLES = [
+  { code: "name", label: "显示名", desc: "线索的显示名；没有显示名时使用用户名。" },
+  { code: "username", label: "用户名", desc: "线索的 Instagram 用户名。" },
+  { code: "keyword", label: "命中关键词", desc: "这条线索得分最高的关键词。" },
+  { code: "brand", label: "品牌名", desc: "来自系统设置里的品牌名。" },
+  { code: "optout_text", label: "退订提示", desc: "自动追加到消息末尾的退订说明。" },
+];
+
+export const ERROR_HINTS = {
+  UNAUTHORIZED: "身份验证未通过：请在顶部重新填写访问口令。",
+  VALIDATION_ERROR: "填写的内容不符合要求，请检查后重试。",
+  NOT_FOUND: "找不到对应的数据，可能已被删除或编号有误。",
+  CONFLICT: "这条数据已经存在，或与当前状态冲突。",
+  INTERNAL_ERROR: "服务器内部错误，请稍后重试。",
+  CAMPAIGN_EMPTY_TARGET: "当前筛选条件下没有可发送的线索，请调整最低分或批次。",
+  TEMPLATE_NOT_APPROVED: "所选模板还没有审核通过，不能用于发送任务。",
+  CAMPAIGN_INVALID_STATE: "任务当前状态不允许这个操作，请刷新后重试。",
+  PROVIDER_NOT_ENABLED: "真实发送渠道未启用；本演示只使用 Mock 沙箱。",
+  TEMPLATE_IMMUTABLE: "已审核或已停用的模板不能直接修改，请创建新版本。",
+  RATE_RULE_REQUIRED: "必须保留至少一条启用的全局规则和一条启用的单收件人规则。",
+  BATCH_FILE_UNSUPPORTED: "文件格式不支持，请上传 CSV 或 JSON。",
+};
+
+export const DEMO_STEPS = [
+  { key: "import", title: "导入示例线索", desc: "把 52 行演示数据写入系统，生成导入报告。", route: "#/leads" },
+  { key: "screen", title: "自动筛选", desc: "按关键词与资料给 44 条线索打分并分档。", route: "#/leads" },
+  { key: "review", title: "审核 1 条", desc: "在「待人工确认」里通过一条，观察它进入目标池。", route: "#/leads" },
+  { key: "create", title: "创建任务", desc: "选择已审核模板与最低分，创建一份草稿。", route: "#/tasks?new=1" },
+  { key: "preview", title: "查看预览", desc: "干跑检查会发送多少、会跳过多少，不会真的发送。", route: "#/tasks" },
+  { key: "start", title: "启动任务", desc: "让系统逐条检查并发送，观察进度与实时动态。", route: "#/tasks" },
+  { key: "stop", title: "模拟退订", desc: "模拟用户回复 STOP，验证退订即时生效。", route: "#/compliance" },
+  { key: "finish", title: "查看统计与日志", desc: "看最终漏斗、失败原因与审计记录。", route: "#/records" },
+];
