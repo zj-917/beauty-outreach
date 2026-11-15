@@ -6,6 +6,7 @@ from pathlib import Path
 
 ADMIN_APP = Path(__file__).resolve().parents[2] / "app" / "static" / "admin" / "app"
 LEADS_JS = ADMIN_APP / "pages" / "leads.js"
+STYLE_CSS = ADMIN_APP.parent / "style.css"
 
 
 def test_AC_UI_003_lead_table_type_filter_and_page_size() -> None:
@@ -23,7 +24,8 @@ def test_AC_UI_003_lead_table_type_filter_and_page_size() -> None:
 def test_AC_UI_003_lead_table_rows_and_review_actions() -> None:
     """Given a lead row, then score, reasons, masked phone and review actions are present."""
     source = LEADS_JS.read_text(encoding="utf-8")
-    assert '["线索", "状态", "评分", "地区 / 语言", "号码", "操作"]' in source
+    assert '"状态", "评分", "地区 / 语言", "号码", "操作"' in source
+    assert 'h("span", {}, "线索")' in source
     assert "phone_masked" in source
     assert "reasonChips(lead.score_reasons" in source
     assert '"通过"' in source and '"拒绝"' in source
@@ -35,3 +37,22 @@ def test_AC_UI_003_lead_table_replaces_card_columns() -> None:
     source = LEADS_JS.read_text(encoding="utf-8")
     assert "board-column" not in source
     assert "lead-card" not in source
+
+
+def test_AC_UI_003_bulk_review_controls() -> None:
+    """Given pending leads, then they can be selected and bulk approved or rejected."""
+    source = LEADS_JS.read_text(encoding="utf-8")
+    assert "批量通过" in source and "批量拒绝" in source
+    assert '"/leads/review-bulk"' in source
+    assert "confirmDialog(" in source
+    assert "请先勾选至少一条待审核线索。" in source
+    assert 'type: "checkbox"' in source
+    assert "已选 ${selected.size} 条" in source
+
+
+def test_AC_UI_003_filter_bar_layout() -> None:
+    """Given the filter bar, then its label stays horizontal and selects stay compact."""
+    css = STYLE_CSS.read_text(encoding="utf-8")
+    assert ".search-row > .muted { flex: none; white-space: nowrap; }" in css
+    assert ".search-row > select { width: auto;" in css
+    assert "flex: 1 1 140px" in css

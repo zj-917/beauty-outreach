@@ -20,6 +20,7 @@ import {
   callout,
   openDrawer,
   openModal,
+  confirmDialog,
   toast,
   toastError,
   fmtTime,
@@ -35,6 +36,7 @@ import {
   BATCH_ERROR_LABELS,
   SOURCE_LABELS,
   TONE,
+  ERROR_HINTS,
 } from "../labels.js";
 import { go } from "../router.js";
 
@@ -55,7 +57,7 @@ let state = {
   q: "",
   poolPage: 1,
   poolSearch: "",
-  board: { status: "ALL", page: 1, size: 10 },
+  board: { status: "ALL", page: 1, size: 10, selected: new Set() },
 };
 
 export async function render(view, params) {
@@ -307,11 +309,18 @@ function renderBoard(overview, leads, distribution, settings) {
       },
     }
   );
+  const selected = state.board.selected;
+  selected.clear();
+  const bulkCount = h("span", { class: "bulk-count" }, "未选择线索");
   const tableHost = h("div", { class: "board-table-host" });
   wrap.append(
     h("div", { class: "search-row" }, [
       h("span", { class: "muted" }, "线索类型："),
       typeSelect,
+      h("span", { class: "bulk-divider" }),
+      bulkCount,
+      button("批量通过", { kind: "primary", iconName: "check", onClick: () => bulkReview("APPROVE") }),
+      button("批量拒绝", { kind: "danger-ghost", onClick: () => bulkReview("REJECT") }),
       h("span", { class: "spacer" }),
       sizeSelect,
     ]),
@@ -319,9 +328,26 @@ function renderBoard(overview, leads, distribution, settings) {
   );
 
   let requestSeq = 0;
+  let currentItems = [];
+  let selectAllBox = null;
+  let rowChecks = new Map();
+
+  function syncBulk() {
+    rowChecks.forEach((box, id) => {
+      box.checked = selected.has(id);
+    });
+    const pending = currentItems.filter((lead) => lead.status === "PENDING_REVIEW");
+    if (selectAllBox) {
+      const chosen = pending.filter((lead) => selected.has(lead.id)).length;
+      selectAllBox.checked = pending.length > 0 && chosen === pending.length;
+      selectAllBox.indeterminate = chosen > 0 && chosen < pending.length;
+    }
+    bulkCount.textContent = selected.size ? `已选 ${selected.size} 条` : "未选择线索";
+  }
 
   function paintTable(data) {
-    const items = data.items || [];
+    currentItems = data.items || [];
+    rowChecks = new Map();
     const total = data.total || 0;
     const pages = Math.max(1, Math.ceil(total / state.board.size));
     const emptyText = state.q
@@ -329,34 +355,70 @@ function renderBoard(overview, leads, distribution, settings) {
       : state.board.status === "ALL"
         ? "还没有线索。点右上角「导入示例线索」开始。"
         : "这个类型下暂时没有线索。可以切换类型查看其他线索。";
+    const pendingOnPage = currentItems.filter((lead) => lead.status === "PENDING_REVIEW");
+    const selectAll = h("input", {
+      type: "checkbox",
+      class: "row-check",
+      title: pendingOnPage.length ? "全选本页待审核线索" : "本页没有待审核线索",
+      disabled: pendingOnPage.length === 0,
+      onchange: (event) => {
+        if (event.target.checked) pendingOnPage.forEach((lead) => selected.add(lead.id));
+        else pendingOnPage.forEach((lead) => selected.delete(lead.id));
+        syncBulk();
+      },
+    });
+    selectAllBox = selectAll;
     clear(tableHost);
     tableHost.append(
       table(
-        ["线索", "状态", "评分", "地区 / 语言", "号码", "操作"],
-        items.map((lead) => [
-          h("div", { class: "lead-cell" }, [
-            h("strong", {}, lead.display_name || lead.username),
-            h("span", { class: "mono muted" }, `@${lead.username}`),
-            lead.score_reasons && lead.score_reasons.length
-              ? reasonChips(lead.score_reasons.slice(0, 2), SCORE_REASON_LABELS)
-              : null,
-          ]),
-          badge(LEAD_STATUS_LABELS, lead.status),
-          lead.score === null || lead.score === undefined
-            ? h("span", { class: "muted" }, "未评分")
-            : chip(String(lead.score), lead.score >= high ? "ok" : lead.score >= low ? "warn" : "danger", `相关性评分 ${lead.score}`),
-          [lead.region, lead.language].filter(Boolean).join(" / ") || "—",
-          lead.phone_masked || h("span", { class: "muted" }, "无号码"),
-          lead.status === "PENDING_REVIEW"
-            ? h("div", { class: "btn-row" }, [
-                button("通过", { kind: "primary", onClick: () => reviewLead(lead, "APPROVE", "") }),
-                button("拒绝", { kind: "danger-ghost", onClick: () => reviewLead(lead, "REJECT", "") }),
-              ])
-            : button("详情", { onClick: () => openLeadDrawer(lead) }),
-        ]),
+        [h("div", { class: "lead-head" }, [selectAll, h("span", {}, "线索")]), "状态", "评分", "地区 / 语言", "号码", "操作"],
+        currentItems.map((lead) => {
+          const canReview = lead.status === "PENDING_REVIEW";
+          let check;
+          if (canReview) {
+            check = h("input", {
+              type: "checkbox",
+              class: "row-check",
+              title: `选择 @${lead.username}`,
+              checked: selected.has(lead.id),
+              onchange: (event) => {
+                if (event.target.checked) selected.add(lead.id);
+                else selected.delete(lead.id);
+                syncBulk();
+              },
+            });
+            rowChecks.set(lead.id, check);
+          } else {
+            check = h("span", { class: "check-spacer" });
+          }
+          return [
+            h("div", { class: "lead-cell" }, [
+              check,
+              h("div", { class: "lead-main" }, [
+                h("strong", {}, lead.display_name || lead.username),
+                h("span", { class: "mono muted" }, `@${lead.username}`),
+                lead.score_reasons && lead.score_reasons.length
+                  ? reasonChips(lead.score_reasons.slice(0, 2), SCORE_REASON_LABELS)
+                  : null,
+              ]),
+            ]),
+            badge(LEAD_STATUS_LABELS, lead.status),
+            lead.score === null || lead.score === undefined
+              ? h("span", { class: "muted" }, "未评分")
+              : chip(String(lead.score), lead.score >= high ? "ok" : lead.score >= low ? "warn" : "danger", `相关性评分 ${lead.score}`),
+            [lead.region, lead.language].filter(Boolean).join(" / ") || "—",
+            lead.phone_masked || h("span", { class: "muted" }, "无号码"),
+            canReview
+              ? h("div", { class: "btn-row" }, [
+                  button("通过", { kind: "primary", onClick: () => reviewLead(lead, "APPROVE", "") }),
+                  button("拒绝", { kind: "danger-ghost", onClick: () => reviewLead(lead, "REJECT", "") }),
+                ])
+              : button("详情", { onClick: () => openLeadDrawer(lead) }),
+          ];
+        }),
         {
           emptyText,
-          onRowClick: (index) => openLeadDrawer(items[index]),
+          onRowClick: (index) => openLeadDrawer(currentItems[index]),
         }
       ),
       h("div", { class: "pager" }, [
@@ -366,10 +428,66 @@ function renderBoard(overview, leads, distribution, settings) {
         button("下一页", { disabled: state.board.page >= pages, onClick: () => { state.board.page += 1; reload(); } }),
       ])
     );
+    syncBulk();
+  }
+
+  async function bulkReview(decision) {
+    const ids = [...selected];
+    const label = decision === "APPROVE" ? "通过" : "拒绝";
+    if (!ids.length) {
+      toast("请先勾选至少一条待审核线索。", "info");
+      return;
+    }
+    const confirmed = await confirmDialog(
+      `确定要批量${label}选中的 ${ids.length} 条线索吗？${decision === "APPROVE" ? "通过后会进入目标池。" : "拒绝后不会再联系这些线索。"}`,
+      { danger: decision === "REJECT", confirmLabel: `批量${label}` }
+    );
+    if (!confirmed) return;
+    try {
+      const response = await api("/leads/review-bulk", {
+        method: "POST",
+        body: { reviews: ids.map((leadId) => ({ lead_id: leadId, decision })) },
+      });
+      const results = response.results || [];
+      const failed = results.filter((item) => !item.ok);
+      invalidateOverview();
+      selected.clear();
+      toast(
+        `批量${label}完成：成功 ${results.length - failed.length} 条，失败 ${failed.length} 条。`,
+        failed.length ? "error" : "success"
+      );
+      if (failed.length) showBulkFailures(failed);
+      refresh();
+    } catch (error) {
+      toastError(error, `批量${label}失败`);
+    }
+  }
+
+  function showBulkFailures(failed) {
+    const byId = new Map(currentItems.map((lead) => [lead.id, lead]));
+    openModal(
+      "部分线索未处理",
+      h("div", { class: "prose" }, [
+        h("p", { class: "muted" }, `有 ${failed.length} 条线索没有处理成功，其余线索已更新。`),
+        table(
+          ["线索", "原因"],
+          failed.map((item) => {
+            const lead = byId.get(item.lead_id);
+            return [
+              lead ? `@${lead.username}` : `#${item.lead_id}`,
+              ERROR_HINTS[item.error && item.error.code] || `操作失败（错误码 ${item.error ? item.error.code : "UNKNOWN"}）`,
+            ];
+          })
+        ),
+      ]),
+      { width: 520 }
+    );
   }
 
   async function reload() {
+    selected.clear();
     const seq = ++requestSeq;
+    syncBulk();
     clear(tableHost);
     tableHost.append(h("div", { class: "loading" }, [h("span", { class: "spinner" }), "正在读取线索…"]));
     try {
