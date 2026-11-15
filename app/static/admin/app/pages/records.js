@@ -39,6 +39,13 @@ const state = {
 let pageView = null;
 let pageParams = null;
 
+/** 枚举下拉的标签更长（中文名 + 代码），单独给更宽的上限。 */
+function wideField(labelText, control) {
+  const node = field(labelText, control);
+  node.classList.add("field-wide");
+  return node;
+}
+
 export async function render(view, params) {
   pageView = view;
   pageParams = params;
@@ -95,8 +102,8 @@ function auditView(data) {
     { placeholder: "全部对象" }
   );
   const entityId = input({ type: "text", value: st.entity_id, placeholder: "例如 7" });
-  const from = input({ type: "text", value: st.from, placeholder: "开始时间（ISO，可选）" });
-  const to = input({ type: "text", value: st.to, placeholder: "结束时间（ISO，可选）" });
+  const from = input({ type: "text", value: st.from, placeholder: "ISO 时间（可选）" });
+  const to = input({ type: "text", value: st.to, placeholder: "ISO 时间（可选）" });
   const verifyHost = h("div", { class: "verify-host" });
 
   function apply() {
@@ -131,8 +138,8 @@ function auditView(data) {
     "只追加、不可修改；每条记录都带操作人与请求编号。",
     h("div", { class: "filter-grid" }, [
       field("操作人", actor),
-      field("动作", action),
-      field("对象类型", entityType),
+      wideField("动作", action),
+      wideField("对象类型", entityType),
       field("对象编号", entityId),
       field("开始时间", from),
       field("结束时间", to),
@@ -187,8 +194,8 @@ function sendView(data) {
     st.reason_code,
     { placeholder: "全部原因" }
   );
-  const from = input({ type: "text", value: st.from, placeholder: "开始时间（ISO，可选）" });
-  const to = input({ type: "text", value: st.to, placeholder: "结束时间（ISO，可选）" });
+  const from = input({ type: "text", value: st.from, placeholder: "ISO 时间（可选）" });
+  const to = input({ type: "text", value: st.to, placeholder: "ISO 时间（可选）" });
 
   function apply() {
     st.task_id = taskId.value.trim();
@@ -212,9 +219,9 @@ function sendView(data) {
     h("div", { class: "filter-grid" }, [
       field("任务编号", taskId),
       field("明细编号", itemId),
-      field("阶段", phase),
-      field("结果", outcome),
-      field("原因代码", reason),
+      wideField("阶段", phase),
+      wideField("结果", outcome),
+      wideField("原因代码", reason),
       field("开始时间", from),
       field("结束时间", to),
       h("div", { class: "filter-actions" }, [

@@ -13,7 +13,7 @@
 | AC-UI-006 | P1★ | — | ⬜ 未覆盖 |
 | AC-UI-007 | P1★ | — | ⬜ 未覆盖 |
 | AC-UI-008 | P1 | — | ⬜ 未覆盖 |
-| AC-UI-009 | P1★ | — | ⬜ 未覆盖 |
+| AC-UI-009 | P1★ | `tests/unit/test_AC_UI_009_audit_filters.py::test_AC_UI_009_filter_fields_have_width_caps`<br>`tests/unit/test_AC_UI_009_audit_filters.py::test_AC_UI_009_filter_actions_align_right`<br>`tests/unit/test_AC_UI_009_audit_filters.py::test_AC_UI_009_records_use_shared_filter_row`<br>`tests/unit/test_AC_UI_009_audit_filters.py::test_AC_UI_009_filter_row_is_responsive` | ✅ 已覆盖 |
 | AC-UI-010 | P1★ | `tests/unit/test_AC_UI_010_ui_static_checks.py::test_AC_UI_010_no_innerhtml_assignment` | ✅ 已覆盖 |
 | AC-UI-011 | P1★ | — | ⬜ 未覆盖 |
 | AC-UI-012 | P1★ | `tests/unit/test_AC_UI_012_014_usability.py::test_AC_UI_012_all_enum_values_have_chinese_labels`<br>`tests/unit/test_AC_UI_012_014_usability.py::test_AC_UI_012_no_raw_english_interface_labels` | ✅ 已覆盖 |
