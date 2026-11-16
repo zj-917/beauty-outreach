@@ -86,7 +86,7 @@ export async function render(view) {
   );
 
   view.append(
-    h("div", { class: "grid two" }, [
+    h("div", { class: "grid two compliance-lists" }, [
       consentsCard(consents),
       suppressionsCard(suppressions),
     ])
@@ -283,16 +283,6 @@ function demoCard(available, settings) {
     }
   }
 
-  async function flush() {
-    try {
-      const response = await demo("/flush-receipts", { method: "POST" });
-      result.replaceChildren(callout(`已生成并应用 ${response.applied} 条 Mock 回执。`, "success"));
-      toast("回执已生成。", "success");
-    } catch (error) {
-      toastError(error, "生成回执失败");
-    }
-  }
-
   async function reset() {
     const ok = await confirmDialog("将清空当前数据库并恢复初始演示数据。这个操作不可撤销。", {
       danger: true,
@@ -317,7 +307,6 @@ function demoCard(available, settings) {
       field("退订文本", text, "默认 STOP；服务端会按真实入站路径处理。"),
       h("div", { class: "btn-row" }, [
         button("模拟用户退订", { kind: "primary", onClick: inboundStop }),
-        button("立即生成送达回执", { onClick: flush }),
         button("重置演示数据", { kind: "danger-ghost", onClick: reset }),
       ]),
     ]),

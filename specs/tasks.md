@@ -38,8 +38,9 @@
 | ☑ | T-27 | 无号码入池线索补全号码的回归测试与批次文案：验证已入池无号码线索重新导入带号码时原地补全、状态与池内位置不变、可发送性变 READY；更正「重复用户名 / 号码归属冲突」说明 | LEAD-005, UI-004 | T-26 | 0.3h（实际 ≈0.2h） | M7 |
 | ☑ | T-28 | 线索筛选栏布局修复与批量审核：标签不换行、下拉框收窄；待审核行多选（表头全选）、批量通过 / 拒绝、二次确认、成功 / 失败反馈与失败明细弹窗 | UI-003 | T-27 | 0.6h（实际 ≈0.5h） | M7 |
 | ☑ | T-29 | 记录页（审计 / 发送日志）筛选行布局优化（spec v2.4）：字段宽度上限与换行、枚举下拉加宽、动作区右对齐、响应式 2 列 / 单列 | UI-009 | T-28 | 0.5h（实际 ≈0.4h） | M7 |
+| ☑ | T-30 | 合规页收尾（spec v2.5）：授权 / 退订黑名单两个表格固定 360px 高并在卡片内滚动、表头吸顶；移除演示沙盒「立即生成送达回执」按钮，回执改由 Worker 每 tick 自动应用（`/demo/flush-receipts` 端点保留） | UI-007（只改布局与演示入口，无新增 AC） | T-29 | 0.3h（实际 ≈0.2h） | M7 |
 
-合计约 **42.6 小时**。未排期的 P2：`LEAD-014`、`POOL-007`、`POOL-008`、`COMP-014`、`CAMP-028`。
+合计约 **42.9 小时**。未排期的 P2：`LEAD-014`、`POOL-007`、`POOL-008`、`COMP-014`、`CAMP-028`。
 
 ## 通用约定（每个任务都适用）
 
@@ -63,3 +64,4 @@
 - **T-19**：权重调整后须同步更新 `screening.md` §6 与 `05-mock-data.md` §6.1，并记入 `CHANGELOG.md`；`mock_leads.json` 有 24 条 `expected_label=relevant`（A 类 20 + E 类 4），E 类 4 行是重复行、导入后不产生 lead，Precision/Recall 必须按「导入后的 lead」计算（relevant 分母 20），E/F 行跳过。另：`05-mock-data.md` §6 要求的 `mock_blacklist.csv` 黑名单导入至今未实现（seed 与 `/demo/reset` 都未导入），需在本任务补上并加测试（已随 T-19 完成，CHANGELOG v1.8）。
 - **T-23**：文案字典集中在 `app/labels.js`（`*_LABELS` / `TASK_STATUS_GUIDE`）；新增状态、原因码、审计动作、对象类型或设置键时，必须同时补中文名与一句话释义。AC-UI-012~014 由静态检查测试兜底；界面观感、引导顺序与真实交互仍需按 `docs/ui-checklist.md` 在浏览器中人工走查。
 - **T-25**：前端入口为 `app/static/admin/app/main.js`，旧 `app.js` / `core.js` / `labels.js` / `pages-*.js` 已移除；静态测试递归扫描 `app/**/*.js`，不再按旧文件名读取。设计 token 在 `style.css`，文案字典在 `app/labels.js`；新增枚举必须同步补中文名与释义。演示向导的状态判断依赖 `/lead-batches`、`/leads`、`/campaigns`、`/suppressions`，不要改成只读页面状态。
+- **T-30**：`POST /demo/flush-receipts` 端点**不要删**——AC-SYS-012、`scripts/demo.py` 与 E2E-5 泄漏扫描仍在调用，`api.probeDemo()` 也靠该路径的 405 / 404 判断演示模式；本次只移除 UI 按钮。名单高度约束必须落在 `.table-host`（它已带 `overflow-x`），加在外层卡片不会产生纵向滚动。
